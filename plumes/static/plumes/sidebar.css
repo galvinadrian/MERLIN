@@ -1,0 +1,93 @@
+/* title styling */ 
+#plumepal {
+    /* font-family: 'Dosis', sans-serif;  */
+    font-size : 50px; 
+}
+
+#Plume {
+    color : rgb(230, 134, 134);
+}
+
+.sidebar { 
+    display: inline-flex; 
+    flex-direction: column; 
+    justify-content: flex-start;
+    align-items: center; 
+
+    background-color: rgb(125, 141, 161);
+    /* border-style: solid; */
+    /* border-bottom-right-radius: 10px; 
+    border-top-right-radius: 10px; 
+    -webkit-border-bottom-right-radius: 10px; 
+    -webkit-border-top-right-radius: 10px; 
+    -moz-border-bottom-right-radius: 10px; 
+    -moz-border-top-right-radius: 10px;  */
+
+    width: 20vw; 
+    height: inherit; 
+}
+
+/* nav bar */
+.navigation { 
+    display : inline-flex; 
+    flex-direction: row;
+    width : 20vw;
+    justify-content: space-evenly;
+}
+
+.nav-button { 
+    background-color: white;
+
+    width: 50%;
+    height: 100%;
+
+    /* color: white;  */
+
+    padding: 10; 
+    padding-bottom: 6;  
+    margin-bottom: 10; 
+    text-align: center;
+}
+
+.nav-button.active,
+.nav-button.hover
+{ 
+    border-bottom-style: solid;
+    -webkit-border-bottom-style: solid; 
+    -moz-border-bottom-style: solid; 
+    border-bottom-width: 10px;
+    -webkit-border-bottom-style: 10px; 
+    -moz-border-bottom-style: 10px; 
+    color: black; 
+}
+
+button { 
+    margin-top: 10;
+}
+
+/* sidebar tabs */ 
+.sidebar-tool { 
+    display: inline-flex; /* so we start with right formatting */ 
+    flex-direction: column; 
+    margin: 2px; 
+    margin-top: 10px; 
+    padding: 5px; 
+    align-items: center; 
+    align-content: center;
+
+    border-radius: 10px; 
+    -webkit-border-radius: 10px; 
+    -moz-border-radius: 10px; 
+
+    /* border-style: solid;  */
+    background-color: white; 
+    /* border-color: rgb(230, 134, 134); */
+
+    width: 95%; 
+    
+    display: none;
+}
+
+.sidebar-tool.active { 
+    display: inline-flex;
+}

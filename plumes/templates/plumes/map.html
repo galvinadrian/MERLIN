@@ -1,0 +1,280 @@
+{% load static %}
+{% load pipeline %}
+
+<!DOCTYPE=html>
+<html> 
+    <head> 
+        <!-- title -->
+        <title> MERLIN </title>
+
+        <!-- meta -->
+        <meta charset='UTF-8'> 
+        <meta name='author' content='Jarod Boone'>
+
+        <!-- script imports -->
+        <script type='text/javascript' src="{% static 'plumes/d3.min.js' %}"></script>
+        <script type='text/javascript' src="{% static 'plumes/jquery-3.3.1.min.js' %}"></script>
+        <script type='text/javascript' src="{% static 'plumes/geojson.js' %}"></script>
+        <script type='text/javascript' src="https://maps.googleapis.com/maps/api/js"></script>
+        <script type='text/javascript' src='https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js'></script>
+        <script type='text/javascript' src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+        <!-- fonts -->
+        <link href="https://fonts.googleapis.com/css?family=Dosis" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+        <!-- styles -->
+        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet"> 
+        {% comment %} <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css"> {% endcomment %}
+        {% comment %} {% stylesheet 'main' %} {% endcomment %}
+        {% comment %} <link rel="stylesheet" type="text/css" href=/> {% endcomment %}
+        <link rel="stylesheet" type="text/css" href="{% static 'plumes/style.css' %}"/>
+        <link rel="stylesheet" type="text/css" href="{% static 'plumes/sidebar.css' %}"/>
+        <link rel="stylesheet" type="text/css" href="{% static 'plumes/data.css' %}"/>
+    </head>
+    <body> 
+
+        <div class="interface"> 
+            <div class="ribbon">
+                {% comment %} <div class="navigation"> 
+                    <div class="nav-button active" id="geography" data-target="0"> <h5> Geography </h5> </div>
+                    <div class="nav-button" id="data" data-target="1"> <h5> Data </h5> </div>
+                </div>
+                <div class="timebar">
+                </div> {% endcomment %}
+                <h1> MERLIN </h1>
+            </div>
+            <div class="sidebar">
+
+            
+                <div class="sidebar-tool active" id="view-tab">
+                    <div class="mode-selection">
+                            <button id="single-btn"> Single </button>
+                            {% comment %} <button id="double_btn"> Double </button> {% endcomment %}
+                            {% comment %} <button id="triple_btn"> Triple </button> {% endcomment %}
+                            <button id="quad-btn"> Quad </button>
+                    </div>
+
+                    <div class='geo-controls active'> 
+
+                    </div>
+                    <div class='scatter-controls active'> 
+                        
+                    </div>
+                    <div class='pie-controls active'> 
+                        
+                    </div>
+
+
+                    <div class='plot-controls'> 
+                        <button id="geo_btn"> Map </button>
+                        <button id="scatter_btn"> Scatter Plot</button>
+                        <button id="pie_btn"> Pie Chart</button>
+                        <button id="color_btn"> Color by biome</button>
+                    </div>
+
+                    {% comment %} <div class="plot-selection">
+                        plot type 
+                        <select class="view-filter"> 
+                            <option value="0" selected="selected">Geography</option> 
+                            <option value="1">Scatter</option> 
+                            <option value="2">Pie</option> 
+                            <option value="3">Parallel Coordinates</option> 
+                        </select>
+
+                    </div>  {% endcomment %}
+
+                    {% comment %} <div class="plot-selection">
+                            x
+                            <select class="x"> 
+                                <option value="0" selected="selected">FRP</option> 
+                                <option value="1">Height</option> 
+                                <option value="2">AOD</option> 
+                                <option value="3">Albedo</option> 
+                            </select> <br>
+                            y
+                            <select class="y"> 
+                                    <option value="0" selected="selected">FRP</option> 
+                                    <option value="1">Height</option> 
+                                    <option value="2">AOD</option> 
+                                    <option value="3">Albedo</option> 
+                                </select>
+    
+                        </div>  {% endcomment %}
+                    
+                </div>
+    
+                <div class="sidebar-tool active" id="data-tab">
+                    <div class="filter-selection"> 
+                        <div class="filter-option"> 
+                            <div class="filter-btn active" id="fb1" data-value="0"> Filter 1</div>
+                            <div class="filter-highlight active" id="fh1"></div>
+                        </div>
+                        <div class="filter-option"> 
+                            <div class="filter-btn" id="fb2" data-value="1"> Filter 2</div>
+                            <div class="filter-highlight" id="fh2"></div>
+                        </div>
+                        <div class="filter-option"> 
+                            <div class="filter-btn" id="fb3" data-value="2"> Filter 3</div>
+                            <div class="filter-highlight" id="fh3"></div>
+                        </div>
+                        <div class="filter-option"> 
+                            <div class="filter-btn" id="fb4" data-value="3">Filter 4</div>
+                            <div class="filter-highlight" id="fh4"></div>
+                        </div>
+                    
+                    </div>
+                    <dl class="dropdown"> 
+                        <dt>
+                            <a data-target="0" id="biome-text">
+                                <span class="hida 0">All Biomes</span>    
+                                <p class="multiSel 0"></p>  
+                            </a>
+                        </dt>
+                        
+                        <dd>
+                            <div class="mutliSelect">
+                                <ul id='biome-drop' data-target="0">
+                                        <li>
+                                            <input type="checkbox" data-code="0" value="Water" />Water</li>
+                                        <li>
+                                            <input type="checkbox" data-code="1" value="Evergreen Needleleaf Forest" />Evergreen Needleleaf Forest</li>
+                                        <li>
+                                            <input type="checkbox" data-code="2" value="Evergreen Broadleaf Forest" />Evergreen Broadleaf Forest</li>
+                                        <li>
+                                            <input type="checkbox" data-code="3" value="Deciduous Needleleaf Forest" />Deciduous Needleleaf Forest</li>
+                                        <li>
+                                            <input type="checkbox" data-code="4" value="Deciduous Broadleaf Forest" />Deciduous Broadleaf Forest</li>
+                                        <li>
+                                            <input type="checkbox" data-code="5" value="Mixed Forest" />Mixed Forest</li>
+                                        <li>
+                                            <input type="checkbox" data-code="6" value="Closed Shrublands" />Closed Shrublands</li>
+                                        <li>
+                                            <input type="checkbox" data-code="7" value="Open Shrublands" />Open Shrublands</li>
+                                        <li>
+                                            <input type="checkbox" data-code="8" value="Woody Savannas" />Woody Savannas</li>
+                                        <li>
+                                            <input type="checkbox" data-code="9" value="Savannas" />Savannas</li>
+                                        <li>
+                                            <input type="checkbox" data-code="10" value="Grasslands" />Grasslands</li>
+                                        <li>
+                                            <input type="checkbox" data-code="11" value="Wetlands" />Wetlands</li>
+                                        <li>
+                                            <input type="checkbox" data-code="12" value="Croplands" />Croplands</li>
+                                        <li>
+                                            <input type="checkbox" data-code="13" value="Urban" />Urban</li>
+                                        <li>
+                                            <input type="checkbox" data-code="14" value="Vegetation Mosaic" />Vegetation Mosaic</li>
+                                        <li>
+                                            <input type="checkbox" data-code="15" value="Snow and Ice" />Snow and Ice</li>
+                                        <li>
+                                            <input type="checkbox" data-code="16" value="Desert" />Desert</li>
+                                </ul>
+                            </div>
+                        </dd>
+                        {% comment %} <button id="reset_btn">Reset</button> {% endcomment %}
+                    </dl>
+                    {% comment %} <div id="slider"></div> {% endcomment %}
+                    <div class="filter"> 
+                        <div class="filter-tag"> 
+                            Max Plume Height
+                        </div>
+                       
+                        <div class="slidecontainer">
+                            <input id="max-ph" type="range" min="1" max="12481" value="12481" class="slider supdate" id="myRange">
+                        </div>
+                    </div>
+                    
+                    <div class="filter"> 
+                        <div class="filter-tag">
+                            Min Plume Height
+                        </div>
+                        <div class="slidecontainer">
+                            <input id="min-ph"type="range" min="1" max="12481" value="1" class="slider supdate" id="myRange">
+                        </div>
+                    </div>
+                    
+                    <div class="filter">
+                        <div class="filter-tag">
+                            Max Fire Radiative Power
+                        </div>
+                            
+                        <div class="slidecontainer">
+                            <input id="max-frp"type="range" min="1" max="1916" value="1916" class="slider supdate" id="myRange">
+                        </div>
+                    </div>
+                   
+                    <div class="filter"> 
+                        <div class="filter-tag">
+                            Min Fire Radiative Power
+                        </div>
+                        <div class="slidecontainer">
+                            <input id="min-frp" type="range" min="1" max="1916" value="1" class="slider supdate" id="myRange">
+                        </div>
+                    </div>
+                    
+                    <dl class="dropdown"> 
+                            <dt>
+                            <a href="#" data-target="1" id="region-text">
+                                <span class="hida 1">All Regions</span>    
+                                <p class="multiSel 1"></p>  
+                            </a>
+                            </dt>
+                            
+                            <dd>
+                                <div class="mutliSelect">
+                                    <ul id='region-drop' data-target="1">
+                                        <li>
+                                            <input type="checkbox" data-code="0" value="Africa" />Africa</li>
+                                        <li>
+                                            <input type="checkbox" data-code="1" value="Australia" />Australia</li>
+                                        <li>
+                                            <input type="checkbox" data-code="2" value="Southwest Eurasia" />Southwest Eurasia</li>
+                                        <li>
+                                            <input type="checkbox" data-code="3" value="North America" />North America</li>
+                                        <li>
+                                            <input type="checkbox" data-code="4" value="Boreal Eurasia" />Boreal Eurasia</li>
+                                        <li>
+                                            <input type="checkbox" data-code="5" value="South America" />South America</li>
+                                        <li>
+                                            <input type="checkbox" data-code="6" value="South Asia" />South Asia</li>
+                                    </ul>
+                                </div>
+                            </dd>
+                            {% comment %} <button id="reset_btn">Reset</button> {% endcomment %}
+                    </dl>
+                    <div class="time-filter"> 
+                        <div class="time-filter-input">
+                            <div class="time-filter-tag">
+                                Start Date
+                            </div>
+                            <input class="time-filter-enter" id="start-date" type="date" name="start-date" min="2000-01-01" max="2018-07-21" value="2000-01-01">
+                        </div>
+                        <div class="time-filter-input">
+                            <div class="time-filter-tag">
+                                End Date
+                            </div>
+                            <input class="time-filter-enter" id="end-date" type="date" name="end-date" min="2000-01-01" max="2018-07-21" value="2018-12-31">
+                        </div>
+                            
+                    </div>
+                </div>
+            </div>
+
+            <div class="stage"> 
+                <div class="loader"></div> 
+            </div>
+        </div>
+
+        
+        <!-- scripts to run after DOM generation -->
+        <script type='text/javascript' src="{% static 'plumes/geojson.js' %}"></script>
+        <script type='text/javascript' src="{% static 'plumes/biome.js' %}"></script>
+        <script type='text/javascript' src="{% static 'plumes/instance.js' %}"></script>
+        <script type='text/javascript' src="{% static 'plumes/newview.js' %}"></script>
+        <script type='text/javascript' src="{% static 'plumes/main.js' %}"></script>
+        {% comment %} <script type='text/javascript' src="{% static 'plumes/map.js' %}"></script> {% endcomment %}
+        
+
+    </body>
+</html>

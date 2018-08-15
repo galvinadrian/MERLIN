@@ -1,0 +1,67 @@
+{% load static %}
+
+<!DOCTYPE=html>
+<html> 
+    <head> 
+        <!-- title -->
+        <title> Plumepal </title>
+
+        <!-- meta -->
+        <meta charset='UTF-8'> 
+        <meta name='author' content='Jarod Boone'>
+
+        <!-- script imports -->
+        <script type='text/javascript' src="{% static 'plumes/d3.min.js' %}"></script>
+        <script type='text/javascript' src="{% static 'plumes/jquery-3.3.1.min.js' %}"></script>
+        <script type='text/javascript' src="https://maps.googleapis.com/maps/api/js"></script>
+        <script type='text/javascript' src='https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js'></script>
+        <script type='text/javascript' src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+        <!-- fonts -->
+        <link href="https://fonts.googleapis.com/css?family=Dosis" rel="stylesheet">
+
+        <!-- styles -->
+        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet"> 
+        <link rel="stylesheet" type="text/css" href="{% static 'plumes/style.css' %}"/>
+    </head>
+    <body> 
+
+        <div class="interface"> 
+            <div class="sidebar">
+                <div class="title_container">
+                        <h1 id="plumepal"> <span id="Plume">Plume</span><span id="Pal">pal</span> </h1>
+                </div>
+                <div class="controls">
+                    <h3> Primary Controls</h3>
+                    <div class="slidecontainer">
+                        <input type="range" min="1" max="200" value="50" class="slider" id="myRange">
+                    </div>
+                    <button id="map_btn"> Map </button>
+                    <button id="scatter_btn"> Scatter Plot </button>
+                    <button id="surface_btn"> Surface Plot </button>
+                    <button id="parallel_btn"> Parallel Coordinates </button>
+                    <button id="clr_btn"> Clear View</button>
+
+                </div>
+
+                <div id="data_loader">
+                    <h3> Data Filters</h3>
+                    Biomes: <input type="text" name="fname"><br>
+                    Regions: <input type="text" name="lname"><br>
+                    Plume Height: <input type="text" name="fname"><br>
+                    Fire Radiative Power: <input type="text" name="lname"><br>
+                    <button id="load_btn"> Load </button>
+                </div>
+                
+            </div>
+
+            <div class="view"></div>
+        </div>
+        
+        <!-- scripts to run after DOM generation -->
+        <script type='text/javascript' src="{% static 'plumes/view.js' %}"></script>
+        <script type='text/javascript' src="{% static 'plumes/main.js' %}"></script>
+        
+
+    </body>
+</html>

@@ -1,0 +1,12 @@
+Dependencies 
+
+django
+django-pipeline
+nodeJS (npm) (??)
+Yuglify 
+    - npm install -g yuglify 
+SCSS/SASS
+    - There are a bunch of ways to get SASS, I used Ruby 
+    - Whatever you do just change the 'SASS_BINARY' option in the PIPELINE 
+      dictionary in MERLIN/settings.py to be the location of the SASS compiler 
+      on your system
