@@ -1,98 +1,77 @@
 // The Instance class that manages all the apps and views in a given 
-// session of Merlin
+// session of Merlin. The Instance targets a single data filter and a single 
+// view at a given time, selected from within it's internal storage. All 
+// operations from the sidebar apply to the selected data filter and view 
+// respectively based on the sidebar tool used 
 //
 // Author - Jarod Boone
+
+// the global session variable that will be used to do virtually all manipulation
+let session = {};
 
 // state constants 
 const STATE = Object.freeze({
     SINGLE_PLUME : 0, 
-    SINGLE_APP : 1, 
-    DUO_APP : 2, 
-    TRI_APP : 3, 
-    QUAD_APP : 4,  
+    SINGLE_VIEW : 1, 
+    DUO_VIEW : 2, 
+    TRI_VIEW : 3, 
+    QUAD_VIEW : 4,  
 })
 
 // view constants for indexing and referencing views 
 const VIEW = Object.freeze({ 
     ID : Object.freeze({
-        MAIN_VIEW_ID : 'view0', 
-        NUM_VIEW_ID : function (id) { 
-            return 'view' + id; 
+        MAIN : 'view1', 
+        INDEX : function (index) { 
+            return 'view' + (index + 1); 
         },
+    }),
+    SINGLE_VIEW : Object.freeze({
+        WIDTH: '80vw',
+        HEIGHT: '93vh', 
+    }), 
+    QUAD_VIEW : Object.freeze({
+        WIDTH: '40vw', 
+        HEIGHT: '46.5vh', 
     })
 })
 
-// constants for dealing with the filter 
+// constants for dealing with the filters
 const FILTER = Object.freeze({ 
+    // filter colors by index
     COLORS : [
         'rgb(26, 109, 204)',
         'rgb(26, 204, 204)',
         'rgb(154, 32, 202)',
         'rgb(127, 204, 26)'
     ], 
+
+    // filter button and highlight ids by index 
     SELECTION_ID : [
         ['#fb1','#fh1'],
         ['#fb2','#fh2'],
         ['#fb3','#fh3'],
         ['#fb4','#fh4']
     ],
+
+    // filter names by index 
     NAME : [
         'Filter 1', 
         'Filter 2', 
         'Filter 3', 
         'Filter 4',
-    ]
+    ], 
+
+    // index constants 
+    CHANNEL_1 : 0, 
+    CHANNEL_2 : 1, 
+    CHANNEL_3 : 2, 
+    CHANNEL_4 : 3, 
 })
 
 // the sets regarding biomes and  
 let addedBiomes = new Set([]); 
 let addedRegions = new Set([]); 
-let addedBiomesNames = new Set([]);
-let addedRegionsNames = new Set([]);
-
-// the sidebar that will be added to 
-const SIDEBAR = document.getElementsByClassName('sidebar'); 
-
-// get both sidebar types and hide them to start 
-const GEO_HTML = $('#view-tab'); 
-const DATA_HTML = $('#data-tab'); 
-
-// make all sidebars invisible 
-const SIDE_CLEAR = function () { 
-    $('.sidebar-tool').each(function() {
-        $(this).removeClass('active'); 
-    });
-}   
-
-// make the geographic exploration sidebar visible 
-const SIDE_GEO = function (instance) { 
-    let tab = $('#geography-tab'); 
-    // if we are already in a geographic state than we do nothing 
-    if (instance.state == STATE.GEOGRAPHY) {
-        console.assert(tab.hasClass('active')); 
-        return; 
-    }
-
-    SIDE_CLEAR(); 
-    tab.addClass('active'); 
-}
-
-// make the data exploration sidebar visible 
-const SIDE_DATA = function (instance) { 
-    let tab = $('#data-tab'); 
-    // if we are already in a data state than we do nothing 
-    // if we are not in geography state we are in a data state
-    if (instance.state != STATE.GEOGRAPHY) {
-        console.assert(tab.hasClass('active'));
-        return; 
-    }
-
-    SIDE_CLEAR(); 
-    tab.addClass('active'); 
-}
-
-// state to sidebar-render function map 
-const SIDEBARS = [null,SIDE_GEO,SIDE_DATA,null,null,null]; 
 
 // the instance class represents a session of MERLIN. This manages the 
 // type of stage we are using as well as the sidebar controls for given 
@@ -102,17 +81,19 @@ const SIDEBARS = [null,SIDE_GEO,SIDE_DATA,null,null,null];
 //    - Create the Instance 
 //    - Set the desired state 
 //    - fetch data for each data index you will use 
+//    - load instance 
 // 
 class Instance { 
     constructor() { 
-        // the current state of the instance
-        this.state = STATE.SINGLE_APP; 
+        // the current state of the instance. This is how many view ports are 
+        // visible in the program
+        this.state = STATE.SINGLE_VIEW; 
 
         // the current view that is being edited by the instance 
-        this.selected_view = 0; 
+        this.selected_view = 0; // default view 1 
 
         // the current filter that is being edited by the instance 
-        this.selected_filter = 0; 
+        this.selected_filter = FILTER.CHANNEL_1; // default channel 1
 
         // the current views that have been loaded into this instance
         this.views = []; 
@@ -123,66 +104,75 @@ class Instance {
         // the data filters that are loaded into the instance 
         this.filters = [null,null,null,null]; 
 
+        // the currently added biomes loaded on the instance
+        this.biomes = new Set([]); // {} ==> all biomes
+        this.regions = new Set([]); // {} ==> all regions
+
         // loading functionality
         this.loading_icon = false; 
         this.load_count = 0;
     }
 
-    // change the state of this instance to the given state
-    change_state(state) { 
-        this.state = state; 
-        // SIDEBARS[this.state](this); 
-        this.load(); // load the instance into the main viewport
+    // this method should be called before anything is done with the instance, the 
+    // instance will load at some point after this method is called. The init method 
+    // populates all of the data filters 
+    init() { 
+        let self = this;
+
+        // create a host filter to seed the other filters with 
+        let father_filter = new Filter(this.biomes,this.regions,true); 
+
+        // when the father filter finishes loading data populate the other data filters 
+        // and then load the instance (i.e. render it)
+        father_filter.dispatcher.addEventListener('data_load',function() {
+            for (let i = 0; i < 4; i++) { 
+                self.filters[i] = new Filter(this.biomes,this.regions,false); 
+                self.filters[i].content = father_filter.content.slice();
+                self.filters[i].mask = father_filter.mask.slice();
+            }
+
+            // once we have populated the filters we can load the instance
+            self.load();
+        })
     }
 
-    // load this instance and render it this assumes that the state has already
+     // load this instance and render it this assumes that the state has already
     // been set appropriately. Loads into main viewport or "stage"
     load() { 
-        const MAIN_VIEW_ID = 'view0'; 
-        if (this.state == STATE.SINGLE_APP) { 
-            $('.view').each(function () { 
-                $(this).remove(); 
-            })
+        // clear any views that currently exist
+        $('.view').each(function () { 
+            $(this).remove(); 
+        })
 
+        if (this.state == STATE.SINGLE_VIEW) { 
             // append a single view 
             let view = $('<div></div>');  // generate the jquery view
             $('.stage').append(view); // attach the view to the stage 
 
             // initialize the view 
             view.attr('class','view')
-                .attr('id',MAIN_VIEW_ID)
-                .css('width','80vw')
-                .css('height','93vh');
+                .attr('id',VIEW.ID.MAIN) // single view on main view
+                .css('width',VIEW.SINGLE_VIEW.WIDTH) // 
+                .css('height',VIEW.SINGLE_VIEW.HEIGHT);
 
-            // if (this.visible_views[this.selected_view]) { 
-            //     this.visible_views[this.selected_view].attach(document.getElementById(MAIN_VIEW_ID));
-            //     this.visible_views[this.selected_view].render(); 
-            // } else { 
-                // create a new view object, add a geographic app to it and render 
-                this.visible_views[this.selected_view] = new View(document.getElementById(MAIN_VIEW_ID),this.selected_filter,0); 
-                
-                // set the current data to the selected view 
-                let data = this.filters[this.selected_filter]; 
-                this.visible_views[this.selected_view].load_data(data);
+            // create a new view object, add a geographic app to it and render 
+            this.visible_views[FILTER.CHANNEL_1] = new View(document.getElementById(VIEW.ID.MAIN),FILTER.CHANNEL_1,0); 
 
-                // add an app to the selected view 
-                let app = new Geo(); 
-                this.visible_views[this.selected_view].load_app(app);
+            // add an app to the selected view 
+            let app = new Geo(); 
 
-                // render the view 
-                this.visible_views[this.selected_view].render(); 
-            // }
-        } else if (this.state == STATE.QUAD_APP) { 
-            $('.view').each(function () { 
-                $(this).remove(); 
-            });
+            // load the app into this view 
+            this.visible_views[this.selected_view].load_app(app);
 
-            // we want 4 views 
+            // render the view for the first time
+            this.visible_views[this.selected_view].render(); 
+
+        } else if (this.state == STATE.QUAD_VIEW) { 
             for (let i = 0; i < 4; i++) { 
 
                 // append the views
                 let view = $('<div></div>');  // generate the jquery view
-                let id = VIEW.ID.NUM_VIEW_ID(i); // generate a unique id for this view
+                let id = VIEW.ID.INDEX(i); // generate a unique id for this view
                 $('.stage').append(view); // attach the view to the stage 
 
                 let right = !(i%2) ? '40vw' : '0px'; 
@@ -196,78 +186,105 @@ class Instance {
                     .css('width','40vw')
                     .css('height','46.5vh');
 
-                // if (this.visible_views[i]) { 
-                //     this.visible_views[i].attach(document.getElementById(id));
-                //     this.visible_views[i].render(); 
-                // } else { 
-                    // create a new view object, add a geographic app to it and render 
-                    this.visible_views[i] = new View(document.getElementById(id),0,i); 
-                    
-                    // set the current data to the selected view 
-                    // this.filters[i] = new Data(addedBiomes,addedRegions); 
-                    // this.visible_views[i].load_data(this.filters[i]);
+                // create a new view object, add a geographic app to it and render 
+                this.visible_views[i] = new View(document.getElementById(id),FILTER.CHANNEL_1,i); 
 
-                    // add an app to the selected view 
-                    let app = new Geo(); 
-                    this.visible_views[i].load_app(app);
+                // add an app to the selected view 
+                let app = null; 
+                if (i == 0 || i == 2) { 
+                    app = new ScatterPlot(0,1); // view 0 and view 2 are scatter plots
+                } else if (i == 1) { 
+                    app = new Pie(0,0); // view 1 is a pie chart
+                } else { 
+                    app = new Geo(); // view 3 is a map
+                }
 
-                    // render the view 
-                    this.visible_views[i].render(); 
-                // }
+                // load the app into the view 
+                this.visible_views[i].load_app(app);
+
+                // render the view for the first time
+                this.visible_views[i].render(); 
 
             }  
         }
+        
+        // clear the view controls 
+        this.clear_view_controls(); 
+
+        // select the first view to begin the data instance
+        this.visible_views[this.selected_view].select();
     }
 
-    init_data() { 
-        let father_filter = new Data(addedBiomes,addedRegions,true);
-
-        let self = this; 
-        father_filter.dispatcher.addEventListener('data_load',function() {
-            for (let i = 0; i < 4; i++) { 
-                self.filters[i] = new Data(addedBiomes,addedRegions,false); 
-                self.filters[i].content = father_filter.content.slice();
-            }
-            self.load();
-        })
+    // change the state of this instance to the given state
+    change_state(state) { 
+        this.state = state; 
+        this.load(); // load the instance into the main viewport
     }
 
-    // change the instances current filter 
-    change_filter(index) { 
-        if (this.current_filter == index) { 
+    // select the filter at the given index to be the current filter of the instance
+    select_filter(new_index) { 
+        if (new_index < 0 || new_index > 3) { 
+            throw 'filter index is out of bounds';
+        }
+
+        // if we are already targeting the filter we want to select then we don't
+        // need to do anything. Hooray
+        if (this.selected_filter == new_index) { 
             return;
         }
 
+        // target the old filter elemets on the sidebar and remove their active
+        // classes for styling
         let old_ids = FILTER.SELECTION_ID[this.selected_filter];
         $(old_ids[0]).removeClass('active'); 
         $(old_ids[1]).removeClass('active'); 
 
-        let new_ids = FILTER.SELECTION_ID[index]; 
+         // set the targeted filter of this session to the new filter 
+         this.selected_filter = new_index; 
 
+        // target the new filter elements on the sidebar and add active classes 
+        // for styling. Gotta look pretty 
+        let new_ids = FILTER.SELECTION_ID[this.selected_filter]; 
         $(new_ids[0]).addClass('active'); 
         $(new_ids[1]).addClass('active'); 
 
-        let color = FILTER.COLORS[index]; 
-
+        // set the filter control box color to match the newly selected filter
+        let color = FILTER.COLORS[this.selected_filter]; 
         $('#data-tab').css('border-color',color); 
 
-        this.selected_filter = index; 
-
+        // load the values of this filter into the sidebar 
         this.filters[this.selected_filter].load();
-
     }
 
-    // load data to the targeted data set 
+    // select the view at the given index to be the current view of the instance
+    // selecting a view will populate the view controls with appropriate controls
+    select_view(new_index) { 
+        if (new_index < 0 || new_index > 3) { 
+            throw 'view index is out of bounds';
+        }
+
+        // deselect the current view (which must be different then the one we
+        // are trying to select at this point)
+        this.visible_views[this.selected_view].deselect();
+
+        // set the view this instance is targeting to the new view 
+        this.selected_view = new_index; 
+
+        // select the new view from within storage... that was easy! 
+        this.visible_views[this.selected_view].select();
+    }
+
+    // clears the view controls 
+    clear_view_controls() { 
+        $('.view-controls').empty();
+    }
+
+    // load data to the targeted data filter
     fetch_data() { 
-        this.filters[this.selected_filter].update(addedBiomes,addedRegions); 
+        this.filters[this.selected_filter].update(this.biomes,this.regions); 
     }
 
-    // copy data into another data set 
-    copy_data(to,from) { 
-        this.filters[to] = this.filters[from];
-    }
-
-    // switch the app on the selected view 
+    // load the given app onto the targeted view and render it  
     load_app(app) { 
         this.visible_views[this.selected_view].load_app(app);
         this.visible_views[this.selected_view].render();  
@@ -275,7 +292,6 @@ class Instance {
 
     // refresh the views of the instance
     refresh() { 
-        console.log('refresh');
         this.visible_views.forEach(function (view) { 
             if (view) { 
                 view.refresh(); 
@@ -283,16 +299,7 @@ class Instance {
         });
     }
 
-    // hide the views from the main viewport
-    hide() { 
-        this.visible_views.forEach(function (view) { 
-            if (view) { 
-                view.clean(); 
-            }
-        });
-    }
-
-    // increment the loading icon count
+    // increment the loading icon count and show the loading icon
     show_loading_icon () { 
         this.load_count++;
 
@@ -306,7 +313,7 @@ class Instance {
         this.loading_icon = true;
     }
 
-    // hide the loading icon
+    // decrement the loading icon count and hide the loading icon 
     hide_loading_icon() { 
         this.load_count--; 
 
@@ -317,5 +324,16 @@ class Instance {
         $('.loader').removeClass('active'); 
         $('.stage').css('opacity',1);
         this.loading_icon = false;
+    }
+
+    // locks the view at index, views that are locked will not upate 
+    // even if render is called (i.e. data_load event)
+    lock(index) { 
+        this.visible_views[index].lock();
+    }
+
+    // unlocks the view at the given index 
+    unlock(index) { 
+        this.visible_views[index].unlock(); 
     }
 }

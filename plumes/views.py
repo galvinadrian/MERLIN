@@ -53,6 +53,8 @@ def query(request) :
     q=q.filter(p_date__gte=datetime.date(int(st[0]),int(st[1]),int(st[2])))
     q=q.filter(p_date__lte=datetime.date(int(et[0]),int(et[1]),int(et[2])))
 
+    # q = q.filter(p_biome_id=0)
+
 
     # d = serialize('geojson',q,geometry_field='point')
     # print(d)

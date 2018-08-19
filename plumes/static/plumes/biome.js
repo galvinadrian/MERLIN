@@ -46,3 +46,25 @@ let biome_names = [
 
 // somewhat redundant list of biome codes 
 let biome_values =  [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,255];
+
+// Biome colors where index corresponds to biome code
+let region_colors = [ 
+    'rgb(255,217,1)', 
+    'rgb(199,84,192)',
+    'rgb(155,188,255)',
+    'rgb(191,151,193)',
+    'rgb(209, 25, 25)',
+    'rgb(15, 70, 189)',
+    'rgb(209, 96, 30)',
+]
+
+let region_names = [
+    'Africa', 
+    'Australia', 
+    'Southwest Eurasia', 
+    'North America', 
+    'Boreal Eurasia', 
+    'South America',
+    'South Asia'
+]
+

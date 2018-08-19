@@ -15,7 +15,10 @@
         <script type='text/javascript' src="{% static 'plumes/d3.min.js' %}"></script>
         <script type='text/javascript' src="{% static 'plumes/jquery-3.3.1.min.js' %}"></script>
         <script type='text/javascript' src="{% static 'plumes/geojson.js' %}"></script>
-        <script type='text/javascript' src="https://maps.googleapis.com/maps/api/js"></script>
+        <script type='text/javascript' src="{% static 'plumes/gl-matrix-min.js' %}"></script>
+        <script type='text/javascript' src="https://unpkg.com/deck.gl@latest/deckgl.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.7.1/pixi.min.js"></script>
+        <script type='text/javascript' src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDWBN65c3Cnza2IPtHUdyKh6Ysj1HbG56E"></script>
         <script type='text/javascript' src='https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js'></script>
         <script type='text/javascript' src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
@@ -54,23 +57,9 @@
                             {% comment %} <button id="triple_btn"> Triple </button> {% endcomment %}
                             <button id="quad-btn"> Quad </button>
                     </div>
-
-                    <div class='geo-controls active'> 
-
-                    </div>
-                    <div class='scatter-controls active'> 
-                        
-                    </div>
-                    <div class='pie-controls active'> 
-                        
-                    </div>
-
-
-                    <div class='plot-controls'> 
-                        <button id="geo_btn"> Map </button>
-                        <button id="scatter_btn"> Scatter Plot</button>
-                        <button id="pie_btn"> Pie Chart</button>
-                        <button id="color_btn"> Color by biome</button>
+                    <br>
+                    <h5> View Controls </h5>
+                    <div class="view-controls">
                     </div>
 
                     {% comment %} <div class="plot-selection">
@@ -258,6 +247,9 @@
                         </div>
                             
                     </div>
+
+                    <button id="wash-btn"> Clear Mask </button>
+                    <button id="scale-btn"> Clear Mask </button>
                 </div>
             </div>
 

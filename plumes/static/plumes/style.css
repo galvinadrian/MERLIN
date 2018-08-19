@@ -57,15 +57,7 @@
 }
 
 #geography-map { 
-    position: absolute;
-}
-
-/* .plot-selection {  */
-    /* display:none;  */
-/* } */
-
-.plot-selection.active { 
-    display: inline-block; 
+    /* position: absolute; */
 }
 
 .view { 
@@ -222,6 +214,19 @@
     display: block;
 }
 
+.view-edit {
+    height: 30px; 
+}
+
+.view-filter {
+    height: 30px;
+}
+
+.toolbar { 
+    display: inline-flex; 
+    align-content: center;
+    align-items: center; 
+}
 
 
 

@@ -1,57 +1,31 @@
 // The main javascript file that generates and runs a MERLIN session 
 // global session variables 
-let session = {},
-    current_data = 0,
-    current_view = 0;
+
 
 // state program for managing state of app 
 $(document).ready(() => {
 
     session = new Instance(); 
-    // session.state = STATE.QUAD_APP
-    // session.fetch_data(0);
-    // for (let i = 1; i < 4; i++) {
-    //     session.copy_data(i,0);  
-    // }
-
-    // session.fetch_data(0);
-    // session.state = STATE.QUAD_APP;
-    session.init_data();
-    // session.load();
+    session.init();
 
     $('#single-btn').click(function() { 
-        if (session.state == STATE.SINGLE_APP) { 
+        if (session.state == STATE.SINGLE_VIEW) { 
             return; 
         }
-        session.state = STATE.SINGLE_APP; 
+        session.state = STATE.SINGLE_VIEW; 
         session.load(); 
     })
 
     $('#quad-btn').click(function() { 
         // alert('nooo');
-        if (session.state == STATE.QUAD_APP) { 
+        if (session.state == STATE.QUAD_VIEW) { 
             return;
         }
-        session.state = STATE.QUAD_APP; 
+        session.state = STATE.QUAD_VIEW; 
         session.load(); 
     })
     
 
-    $('.view-edit').click(function() {
-        if ($(this).hasClass('active')) { 
-            return; 
-        }
-        alert('nah');
-        $('.view-edit.active').removeClass('active');
-        $(this).addClass('active');
-        session.selected_view = $(this).attr('data-value');
-    })
-    // $('.view-filter').change(function() { 
-    //     // alert('oh');
-    //     let val = $(this).val(); 
-    //     let view = $(this).parent().parent();
-    //     alert(view);
-    // })
     $('.supdate').change(function(){
         session.fetch_data();
     });
@@ -92,21 +66,17 @@ $(document).ready(() => {
                 view.app.color = true; 
                 view.app.render();
             }
-            
         }
-        
     })
 
-    // let addedBiomes = new Set([]); 
-    // let addedRegions = new Set([]); 
-
-    $('#load_btn').click(function(){ 
-        session.fetch_data(current_filter) 
-    })
 
     $('.filter-btn').click(function() { 
         let index = $(this).attr('data-value');
-        session.change_filter(index);
+        session.select_filter(index);
+    })
+
+    $('#wash-btn').click(function() { 
+        session.filters[session.selected_filter].reset_mask();
     })
 
 
@@ -118,9 +88,7 @@ $(document).ready(() => {
     */
 
     let drops = ['#biome-drop','#region-drop'];
-    let texts = ['#biome-text','#region-text'];
-    let sets = [addedBiomes,addedRegions];
-    let name_sets = [addedBiomesNames,addedRegionsNames];
+    let sets = [session.biomes,session.regions];
 
     $(".dropdown dt a").on('click', function() {
         let target = $(this).attr('data-target'); 
@@ -141,9 +109,7 @@ $(document).ready(() => {
 
         var target = $(this).parent().parent().attr('data-target'); 
         let set = sets[target]; 
-        let name_set = name_sets[target];
         let code = $(this).attr('data-code'); 
-        // alert(target);
     
         var title = $(this).closest('.mutliSelect').find('input[type="checkbox"]').val(),
         title = $(this).val() + ",";
@@ -153,18 +119,15 @@ $(document).ready(() => {
             $('.multiSel.' + target).append(html);
             $(".hida." + target).hide();
             set.add(code); 
-            name_set.add([html,code]);
             session.fetch_data();
         } else {
             $('span[title="' + title + '"]').remove();
-            var ret = $(".hida." + target);
-            $(texts[target]).append(ret);
+            // var ret = $(".hida." + target);
+            // $(texts[target]).append(ret);
             set.delete(code); 
-            name_set.forEach(function(lit) { 
-                if (lit[1] == code) {
-                    name_set.delete(lit)
-                }
-            });
+            if (set.size == 0) { 
+                $('.hida.' + target).show();
+            }
             session.fetch_data();
         }
     });
