@@ -17,6 +17,7 @@
         <script type='text/javascript' src="{% static 'plumes/geojson.js' %}"></script>
         <script type='text/javascript' src="{% static 'plumes/gl-matrix-min.js' %}"></script>
         <script type='text/javascript' src="https://unpkg.com/deck.gl@latest/deckgl.min.js"></script>
+        <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.7.1/pixi.min.js"></script>
         <script type='text/javascript' src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDWBN65c3Cnza2IPtHUdyKh6Ysj1HbG56E"></script>
         <script type='text/javascript' src='https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js'></script>
@@ -28,6 +29,8 @@
 
         <!-- styles -->
         <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet"> 
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
+
         {% comment %} <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css"> {% endcomment %}
         {% comment %} {% stylesheet 'main' %} {% endcomment %}
         {% comment %} <link rel="stylesheet" type="text/css" href=/> {% endcomment %}

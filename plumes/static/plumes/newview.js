@@ -948,46 +948,72 @@ class Geo extends App{
         let self = this; 
 
         let data = []; 
-
+        let color = []; 
         this.view_data.data().forEach(function(plume){ 
-            data.push({
-                position: [parseFloat(plume.p_src_long),parseFloat(plume.p_src_lat)],
-                color: [255,0,0], 
-                radius: 10000000
-            })
+            color = biome_colors_arr[plume.p_biome_id].slice();
+            color.push(255);
+            data.push([parseFloat(plume.p_src_long),parseFloat(plume.p_src_lat),color])
         });
 
         console.log(data);
 
+        let scatter = new deck.ScatterplotLayer({
+            id: 'points', 
+            radiusMaxPixels: 5,
+            radiusMinPixels: 5,
+            // radiusScale: 1
+            getRadius: function(d) {return 0.5},
+            getPosition: function(d) {return [d[0],d[1],0];}, 
+            getColor: function(d) {return d[2]},
+            data: data
+
+        })
+
         let deck_options = { 
             id: 'geo-deck',
             container: 'geography-app',
+            mapboxApiAccessToken: 'pk.eyJ1IjoiamJvb25lIiwiYSI6ImNqa3o2cjVhdTA2OHkzcG0wOHU4OXplNTMifQ.b3gc6bHvJM8MChCUDZQPKw',
+            mapStyle: 'mapbox://styles/mapbox/satellite-v9',
+            // mapStyle: 'mapbox://styles/mapbox/light-v9',
+            viewState : { 
             longitude: 0,
             latitude: 0,
             zoom: 0.5,
-            // views: new MapView({
-            //     id: 'main-view', 
-            // }),
-            // onViewStateChange: function(viewstate) {
-            //     console.log(viewstate);
-            //     return viewstate;
-            // },
-            // container: this, 
+            maxZoom: 12, 
+            minZoom: 0.5,
+            },
+          
+
+            // views: new View({}),
             layers: [
-                new deck.GeoJsonLayer({
-                    data: geojson,
-                    getFillColor: [160, 160, 180, 200],
-                }),
-                new deck.ScatterplotLayer({
-                    radiusMaxPixels: 8,
-                    radiusMinPixels: 8,
-                    // radiusScale: 1,s
-                    getRadius: 1,
-                    data: data
-                })
+                // new deck.GeoJsonLayer({
+                //     id: 'yo',
+                //     data: geojson,
+                //     getFillColor: [160, 160, 180, 200],
+                // }),
+                scatter
               ]
 
         }
+
+        // new deck.DeckGL({
+            
+        //     longitude: -74,
+        //     latitude: 40.76,
+        //     zoom: 11,
+        //     maxZoom: 16,
+        //     layers: [
+        //       new deck.ScatterplotLayer({
+        //         id: 'scatter-plot',
+        //         data: 'https://raw.githubusercontent.com/uber-common/deck.gl-data/master/examples/scatterplot/manhattan.json',
+        //         radiusScale: 10,
+        //         radiusMinPixels: 0.5,
+        //         getPosition: d => [d[0], d[1], 0],
+        //         // getColor: d => (d[2] === 1 ? MALE_COLOR : FEMALE_COLOR)
+        //       })
+        //     ]
+        //   });
+      
 
         let dk = new deck.DeckGL(deck_options);
         console.log(dk); 
