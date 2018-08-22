@@ -9,8 +9,9 @@
 }
 
 #data-tab { 
-    border-style: solid; 
-    border-color: rgb(26, 109, 204);
+    /* border-style: solid; 
+    border-color: rgb(26, 109, 204); */
+    z-index: 9999;
 }
 
 .filter-option { 
@@ -34,22 +35,22 @@
 
 #fb1.active,
 #fh1.active { 
-    background-color: rgb(26, 109, 204); 
+    background-color: rgb(0, 69, 160); 
 }
 
 #fb2.active,
 #fh2.active { 
-    background-color: rgb(26, 204, 204); 
+    background-color: rgb(6,112,183); 
 }
 
 #fb3.active,
 #fh3.active { 
-    background-color: rgb(154, 32, 202); 
+    background-color: rgb(5,193,246); 
 }
 
 #fb4.active,
 #fh4.active { 
-    background-color: rgb(127, 204, 26); 
+    background-color: rgb(37,221,186); 
 }
 
 .filter-btn:hover { 
@@ -69,3 +70,41 @@
 .filter-highlight.active { 
     display: inline-block;
 }
+
+/* .noUi-handle {
+    width: 10px !important;
+}
+
+.noUi-target {
+    padding: 0 12px;
+}
+.noUi-base:before,
+.noUi-base:after {
+    display: none;
+    width: 17px;
+    content: "";
+    position: absolute;
+    top: 0;
+    height: 100%;
+    display: block;
+}
+.noUi-base:before {
+    left: -12px !important;
+}
+.noUi-base:after {
+    left: 100%;
+} */
+
+/* .noUi-handle.noUi-handle-upper {
+    width: 10px;
+}
+
+.noUi-horizontal .noUi-handle {
+    width: 10px !important;
+    height: 28px;
+}
+
+::after, ::before {
+    box-sizing: border-box;
+    display:none !important;
+} */

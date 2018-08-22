@@ -25,7 +25,11 @@ SECRET_KEY = '_2k^h=!k7i&2en3#(fq2czw@%wc@+1a49!gjx8*8%xw_^r0+a_'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '10.2.1.149',
+    '10.4.1.29',
+    '127.0.0.1'
+]
 
 # Pipeline Setup 
 PIPELINE = {

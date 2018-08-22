@@ -16,20 +16,25 @@
         <script type='text/javascript' src="{% static 'plumes/jquery-3.3.1.min.js' %}"></script>
         <script type='text/javascript' src="{% static 'plumes/geojson.js' %}"></script>
         <script type='text/javascript' src="{% static 'plumes/gl-matrix-min.js' %}"></script>
+        <script type='text/javascript' src="{% static 'plumes/nouislider.min.js' %}"></script>
+        <script src="https://unpkg.com/tippy.js@2.5.4/dist/tippy.all.min.js"></script>
         <script type='text/javascript' src="https://unpkg.com/deck.gl@latest/deckgl.min.js"></script>
         <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.7.1/pixi.min.js"></script>
         <script type='text/javascript' src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDWBN65c3Cnza2IPtHUdyKh6Ysj1HbG56E"></script>
         <script type='text/javascript' src='https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js'></script>
         <script type='text/javascript' src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <!-- <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script> -->
+        <!-- <script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script> -->
 
         <!-- fonts -->
         <link href="https://fonts.googleapis.com/css?family=Dosis" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
         <!-- styles -->
-        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet"> 
-    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+        <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
+        <!-- <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" /> -->
 
         {% comment %} <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css"> {% endcomment %}
         {% comment %} {% stylesheet 'main' %} {% endcomment %}
@@ -37,21 +42,17 @@
         <link rel="stylesheet" type="text/css" href="{% static 'plumes/style.css' %}"/>
         <link rel="stylesheet" type="text/css" href="{% static 'plumes/sidebar.css' %}"/>
         <link rel="stylesheet" type="text/css" href="{% static 'plumes/data.css' %}"/>
+        <link rel="stylesheet" type="text/css" href="{% static 'plumes/nouislider.css' %}"/>
     </head>
     <body> 
 
-        <div class="interface"> 
             <div class="ribbon">
-                {% comment %} <div class="navigation"> 
-                    <div class="nav-button active" id="geography" data-target="0"> <h5> Geography </h5> </div>
-                    <div class="nav-button" id="data" data-target="1"> <h5> Data </h5> </div>
-                </div>
-                <div class="timebar">
-                </div> {% endcomment %}
-                <h1> MERLIN </h1>
-            </div>
-            <div class="sidebar">
+                <span class="glyphicon glyphicon-th-large"></span>
 
+                </div>
+
+        <div class="interface"> 
+            <div class="sidebar">
             
                 <div class="sidebar-tool active" id="view-tab">
                     <div class="mode-selection">
@@ -61,7 +62,7 @@
                             <button id="quad-btn"> Quad </button>
                     </div>
                     <br>
-                    <h5> View Controls </h5>
+                    <!-- <h5> View Controls </h5> -->
                     <div class="view-controls">
                     </div>
 
@@ -116,99 +117,84 @@
                         </div>
                     
                     </div>
-                    <dl class="dropdown"> 
-                        <dt>
-                            <a data-target="0" id="biome-text">
-                                <span class="hida 0">All Biomes</span>    
-                                <p class="multiSel 0"></p>  
-                            </a>
-                        </dt>
-                        
-                        <dd>
-                            <div class="mutliSelect">
-                                <ul id='biome-drop' data-target="0">
-                                        <li>
-                                            <input type="checkbox" data-code="0" value="Water" />Water</li>
-                                        <li>
-                                            <input type="checkbox" data-code="1" value="Evergreen Needleleaf Forest" />Evergreen Needleleaf Forest</li>
-                                        <li>
-                                            <input type="checkbox" data-code="2" value="Evergreen Broadleaf Forest" />Evergreen Broadleaf Forest</li>
-                                        <li>
-                                            <input type="checkbox" data-code="3" value="Deciduous Needleleaf Forest" />Deciduous Needleleaf Forest</li>
-                                        <li>
-                                            <input type="checkbox" data-code="4" value="Deciduous Broadleaf Forest" />Deciduous Broadleaf Forest</li>
-                                        <li>
-                                            <input type="checkbox" data-code="5" value="Mixed Forest" />Mixed Forest</li>
-                                        <li>
-                                            <input type="checkbox" data-code="6" value="Closed Shrublands" />Closed Shrublands</li>
-                                        <li>
-                                            <input type="checkbox" data-code="7" value="Open Shrublands" />Open Shrublands</li>
-                                        <li>
-                                            <input type="checkbox" data-code="8" value="Woody Savannas" />Woody Savannas</li>
-                                        <li>
-                                            <input type="checkbox" data-code="9" value="Savannas" />Savannas</li>
-                                        <li>
-                                            <input type="checkbox" data-code="10" value="Grasslands" />Grasslands</li>
-                                        <li>
-                                            <input type="checkbox" data-code="11" value="Wetlands" />Wetlands</li>
-                                        <li>
-                                            <input type="checkbox" data-code="12" value="Croplands" />Croplands</li>
-                                        <li>
-                                            <input type="checkbox" data-code="13" value="Urban" />Urban</li>
-                                        <li>
-                                            <input type="checkbox" data-code="14" value="Vegetation Mosaic" />Vegetation Mosaic</li>
-                                        <li>
-                                            <input type="checkbox" data-code="15" value="Snow and Ice" />Snow and Ice</li>
-                                        <li>
-                                            <input type="checkbox" data-code="16" value="Desert" />Desert</li>
-                                </ul>
-                            </div>
-                        </dd>
-                        {% comment %} <button id="reset_btn">Reset</button> {% endcomment %}
-                    </dl>
-                    {% comment %} <div id="slider"></div> {% endcomment %}
-                    <div class="filter"> 
-                        <div class="filter-tag"> 
-                            Max Plume Height
-                        </div>
-                       
-                        <div class="slidecontainer">
-                            <input id="max-ph" type="range" min="1" max="12481" value="12481" class="slider supdate" id="myRange">
-                        </div>
-                    </div>
-                    
-                    <div class="filter"> 
-                        <div class="filter-tag">
-                            Min Plume Height
-                        </div>
-                        <div class="slidecontainer">
-                            <input id="min-ph"type="range" min="1" max="12481" value="1" class="slider supdate" id="myRange">
-                        </div>
-                    </div>
-                    
-                    <div class="filter">
-                        <div class="filter-tag">
-                            Max Fire Radiative Power
-                        </div>
+
+                    <div class="dropdown-container">  
+                        <dl class="dropdown"> 
+                            <dt data-target="0">
+                                <a data-target="0" id="biome-text">
+                                    <span class="hida 0">All</span>    
+                                    <p class="multiSel 0"></p>  
+                                </a>
+                            </dt>
                             
-                        <div class="slidecontainer">
-                            <input id="max-frp"type="range" min="1" max="1916" value="1916" class="slider supdate" id="myRange">
-                        </div>
+                            <dd>
+                                <div class="mutliSelect">
+                                    <ul id='biome-drop' data-target="0">
+                                            <li>
+                                                <input type="checkbox" data-code="0" value="Water" />Water</li>
+                                            <li>
+                                                <input type="checkbox" data-code="1" value="Evergreen Needleleaf Forest" />Evergreen Needleleaf Forest</li>
+                                            <li>
+                                                <input type="checkbox" data-code="2" value="Evergreen Broadleaf Forest" />Evergreen Broadleaf Forest</li>
+                                            <li>
+                                                <input type="checkbox" data-code="3" value="Deciduous Needleleaf Forest" />Deciduous Needleleaf Forest</li>
+                                            <li>
+                                                <input type="checkbox" data-code="4" value="Deciduous Broadleaf Forest" />Deciduous Broadleaf Forest</li>
+                                            <li>
+                                                <input type="checkbox" data-code="5" value="Mixed Forest" />Mixed Forest</li>
+                                            <li>
+                                                <input type="checkbox" data-code="6" value="Closed Shrublands" />Closed Shrublands</li>
+                                            <li>
+                                                <input type="checkbox" data-code="7" value="Open Shrublands" />Open Shrublands</li>
+                                            <li>
+                                                <input type="checkbox" data-code="8" value="Woody Savannas" />Woody Savannas</li>
+                                            <li>
+                                                <input type="checkbox" data-code="9" value="Savannas" />Savannas</li>
+                                            <li>
+                                                <input type="checkbox" data-code="10" value="Grasslands" />Grasslands</li>
+                                            <li>
+                                                <input type="checkbox" data-code="11" value="Wetlands" />Wetlands</li>
+                                            <li>
+                                                <input type="checkbox" data-code="12" value="Croplands" />Croplands</li>
+                                            <li>
+                                                <input type="checkbox" data-code="13" value="Urban" />Urban</li>
+                                            <li>
+                                                <input type="checkbox" data-code="14" value="Vegetation Mosaic" />Vegetation Mosaic</li>
+                                            <li>
+                                                <input type="checkbox" data-code="15" value="Snow and Ice" />Snow and Ice</li>
+                                            <li>
+                                                <input type="checkbox" data-code="16" value="Desert" />Desert</li>
+                                    </ul>
+                                </div>
+                            </dd>
+                            {% comment %} <button id="reset_btn">Reset</button> {% endcomment %}
+                        </dl>
+                        <span class="dropdown-label"> Biomes </span>
                     </div>
-                   
-                    <div class="filter"> 
-                        <div class="filter-tag">
-                            Min Fire Radiative Power
-                        </div>
-                        <div class="slidecontainer">
-                            <input id="min-frp" type="range" min="1" max="1916" value="1" class="slider supdate" id="myRange">
-                        </div>
+
+
+                    <div class="filter-container" id="container-height">
+                        <div class='filter-slider' id='filter-height'> </div>
+                        <div class='filter-label' id='filter-label-height'> Height </div>
+                    </div>
+                    <div class="filter-container" id="container-frp">
+                        <div class='filter-slider' id='filter-frp'> </div>
+                        <div class='filter-label' id='filter-label-frp'> FRP </div>
+                    </div>
+                    <div class="filter-container" id="container-aod">
+                        <div class='filter-slider' id='filter-aod'> </div>
+                        <div class='filter-label' id='filter-label-aod'> AOD </div>
+                    </div>
+                    <div class="filter-container" id="container-ssa">
+                        <div class='filter-slider' id='filter-ssa'> </div>
+                        <div class='filter-label' id='filter-label-ssa'> SSA </div>
                     </div>
                     
-                    <dl class="dropdown"> 
-                            <dt>
+                    <div class="dropdown-container">
+                        <dl class="dropdown"> 
+                            <dt data-target="1">
                             <a href="#" data-target="1" id="region-text">
-                                <span class="hida 1">All Regions</span>    
+                                <span class="hida 1">All </span>    
                                 <p class="multiSel 1"></p>  
                             </a>
                             </dt>
@@ -234,30 +220,32 @@
                                 </div>
                             </dd>
                             {% comment %} <button id="reset_btn">Reset</button> {% endcomment %}
-                    </dl>
+                        </dl>
+                        <span class="dropdown-label"> Regions </span>
+
+                    </div>
+                
+                    
                     <div class="time-filter"> 
-                        <div class="time-filter-input">
                             <div class="time-filter-tag">
-                                Start Date
-                            </div>
+                                Data Range
+                                </div>
                             <input class="time-filter-enter" id="start-date" type="date" name="start-date" min="2000-01-01" max="2018-07-21" value="2000-01-01">
-                        </div>
-                        <div class="time-filter-input">
-                            <div class="time-filter-tag">
-                                End Date
-                            </div>
                             <input class="time-filter-enter" id="end-date" type="date" name="end-date" min="2000-01-01" max="2018-07-21" value="2018-12-31">
-                        </div>
                             
                     </div>
-
-                    <button id="wash-btn"> Clear Mask </button>
-                    <button id="scale-btn"> Clear Mask </button>
+ 
+               
+                    <div>
+                        <button id="wash-btn"> Clear Mask </button> 
+                        <button id="wash-btn"> Download </button> 
+                    </div>
                 </div>
             </div>
 
             <div class="stage"> 
-                <div class="loader"></div> 
+                <div class="loader"></div>
+                
             </div>
         </div>
 
@@ -270,6 +258,5 @@
         <script type='text/javascript' src="{% static 'plumes/main.js' %}"></script>
         {% comment %} <script type='text/javascript' src="{% static 'plumes/map.js' %}"></script> {% endcomment %}
         
-
     </body>
 </html>

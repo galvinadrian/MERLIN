@@ -27,24 +27,40 @@ const VIEW = Object.freeze({
         },
     }),
     SINGLE_VIEW : Object.freeze({
-        WIDTH: '80vw',
-        HEIGHT: '93vh', 
+        WIDTH: '79vw',
+        HEIGHT: '90vh', 
+        TOP: '1vh', 
+        RIGHT: '0.5vw',
     }), 
     QUAD_VIEW : Object.freeze({
-        WIDTH: '40vw', 
-        HEIGHT: '46.5vh', 
-    })
+        WIDTH: '39.25vw', 
+        HEIGHT: '44.5vh', 
+        TOP: '46.5vh', 
+        RIGHT: '40.25vw',
+        NO_RIGHT: '0.5vw', 
+        NO_TOP: '1vh',
+    }),
+    DROPS : [
+        '#geo-style-drop',
+    ]
 })
 
 // constants for dealing with the filters
 const FILTER = Object.freeze({ 
     // filter colors by index
     COLORS : [
-        'rgb(26, 109, 204)',
-        'rgb(26, 204, 204)',
-        'rgb(154, 32, 202)',
-        'rgb(127, 204, 26)'
+        'rgb(0, 69, 160)',
+        'rgb(6,112,183)',
+        'rgb(5,193,246)',
+        'rgb(37,221,186)'
     ], 
+
+    COLORS_ARR : [
+        [0, 69, 160],
+        [6,112,183],
+        [5,193,246],
+        [37,221,186]
+    ],
 
     // filter button and highlight ids by index 
     SELECTION_ID : [
@@ -120,13 +136,13 @@ class Instance {
         let self = this;
 
         // create a host filter to seed the other filters with 
-        let father_filter = new Filter(this.biomes,this.regions,true); 
+        let father_filter = new Filter(this.biomes,this.regions,true,0); 
 
         // when the father filter finishes loading data populate the other data filters 
         // and then load the instance (i.e. render it)
         father_filter.dispatcher.addEventListener('data_load',function() {
             for (let i = 0; i < 4; i++) { 
-                self.filters[i] = new Filter(this.biomes,this.regions,false); 
+                self.filters[i] = new Filter(this.biomes,this.regions,false,i); 
                 self.filters[i].content = father_filter.content.slice();
                 self.filters[i].mask = father_filter.mask.slice();
             }
@@ -152,11 +168,13 @@ class Instance {
             // initialize the view 
             view.attr('class','view')
                 .attr('id',VIEW.ID.MAIN) // single view on main view
+                .css('right',VIEW.SINGLE_VIEW.RIGHT)
+                .css('top',VIEW.SINGLE_VIEW.TOP)
                 .css('width',VIEW.SINGLE_VIEW.WIDTH) // 
                 .css('height',VIEW.SINGLE_VIEW.HEIGHT);
 
             // create a new view object, add a geographic app to it and render 
-            this.visible_views[FILTER.CHANNEL_1] = new View(document.getElementById(VIEW.ID.MAIN),FILTER.CHANNEL_1,0); 
+            this.visible_views[this.selected_view] = new View(document.getElementById(VIEW.ID.MAIN),this.selected_filter,0); 
 
             // add an app to the selected view 
             let app = new Geo(); 
@@ -175,16 +193,16 @@ class Instance {
                 let id = VIEW.ID.INDEX(i); // generate a unique id for this view
                 $('.stage').append(view); // attach the view to the stage 
 
-                let right = !(i%2) ? '40vw' : '0px'; 
-                let top = !(i < 2) ? '46.5vh' : '0px'; 
+                let right = !(i%2) ? VIEW.QUAD_VIEW.RIGHT : VIEW.QUAD_VIEW.NO_RIGHT; 
+                let top = !(i < 2) ? VIEW.QUAD_VIEW.TOP : VIEW.QUAD_VIEW.NO_TOP; 
 
                 // initialize the view 
                 view.attr('class','view')
                     .attr('id',id)
                     .css('right',right)
                     .css('top',top)
-                    .css('width','40vw')
-                    .css('height','46.5vh');
+                    .css('width',VIEW.QUAD_VIEW.WIDTH)
+                    .css('height',VIEW.QUAD_VIEW.HEIGHT);
 
                 // create a new view object, add a geographic app to it and render 
                 this.visible_views[i] = new View(document.getElementById(id),FILTER.CHANNEL_1,i); 
@@ -250,7 +268,14 @@ class Instance {
 
         // set the filter control box color to match the newly selected filter
         let color = FILTER.COLORS[this.selected_filter]; 
-        $('#data-tab').css('border-color',color); 
+
+        $('.noUi-connect').css('background',FILTER.COLORS[this.selected_filter]);
+        // $('.toolbar').find().val(new_index).css('background',FILTER.COLORS[this.selected_filter]);
+        // $('.noUi-connect').each(function(i,slider) {
+        //     console.log(slider);
+        //     $(slider).css('background',FILTER.COLORS[this.selected_filter]);
+        // })
+        // $('#data-tab').css('border-color',color); 
 
         // load the values of this filter into the sidebar 
         this.filters[this.selected_filter].load();
@@ -265,7 +290,7 @@ class Instance {
 
         // deselect the current view (which must be different then the one we
         // are trying to select at this point)
-        this.visible_views[this.selected_view].deselect();
+        this.this.clear_view_controls();
 
         // set the view this instance is targeting to the new view 
         this.selected_view = new_index; 
@@ -308,8 +333,10 @@ class Instance {
         }
 
         $('.stage').css('opacity',0.5);
+        $('.loader').css('border-top-color',FILTER.COLORS[this.selected_filter]);
         $('.loader').addClass('active');
         $('.loader').css('opacity',1); 
+        
         this.loading_icon = true;
     }
 

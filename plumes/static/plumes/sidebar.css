@@ -11,10 +11,13 @@
 .sidebar { 
     display: inline-flex; 
     flex-direction: column; 
-    justify-content: flex-start;
-    align-items: center; 
+    justify-content: space-between;
+    align-items: flex-end; 
+    margin: 0px;
+    margin-top: 1vh;
+    /* margin-left: 0.5vw; */
 
-    background-color: rgb(125, 141, 161);
+    /* background-color: rgb(125, 141, 161); */
     /* border-style: solid; */
     /* border-bottom-right-radius: 10px; 
     border-top-right-radius: 10px; 
@@ -70,8 +73,9 @@ button {
     display: inline-flex; /* so we start with right formatting */ 
     flex-direction: column; 
     margin: 2px; 
-    margin-top: 10px; 
+    margin-bottom: 2vh; 
     padding: 5px; 
+    justify-content: space-between;
     align-items: center; 
     align-content: center;
 
@@ -84,10 +88,47 @@ button {
     /* border-color: rgb(230, 134, 134); */
 
     width: 95%; 
+    /* height: 100%; */
     
     display: none;
+}
+
+#view-tab { 
+    height: 31.5vh;
+    margin-bottom: 0px;
+}
+#data-tab {
+    height: 65vh;
+}
+
+#view-tab { 
+    justify-content: flex-start;
 }
 
 .sidebar-tool.active { 
     display: inline-flex;
 }
+
+.dropdown-container { 
+    display: inline-flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.dropdown-label {
+    font-size: 12px;
+    padding-top: 7px;
+    margin-right: 20px;
+}
+
+/* .plot-selection {
+    border-radius: 500px !important;
+    -webkit-border-radius: 500px;
+    -moz-border-radius: 500px; 
+
+    appearance: none;
+    border-color: rgb(225, 230, 239);
+
+    background: white;
+} */

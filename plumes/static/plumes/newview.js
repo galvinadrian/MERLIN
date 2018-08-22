@@ -1,16 +1,49 @@
 // javascript to control the view interface and establish various visual elements 
 const event = new CustomEvent('data_load');
 // const event = new CustomEvent('data_change');
+let view_dropped = -1;
+
+let sliders = $('.filter-slider');
+let ranges = [
+    {'min' : 1, 'max' : 12481}, 
+    {'min' : 1, 'max' : 1916}, 
+    {'min' : 0, 'max' : 1}, 
+    {'min' : 0, 'max' : 1}, 
+]
+
+sliders.each(function(i,slider) {
+    noUiSlider.create(slider, {
+        start: [ranges[i]['min'], ranges[i]['max']],
+        tooltips: [true,true],
+        connect: true,
+        range: ranges[i]
+    }).on('change',function(){ 
+        session.fetch_data();
+    });
+})
 
 // Class representing a data object 
 class Filter { 
     // when you construct the data object we retrieve a data query from 
     // the current filters and save that into the content of the object 
-    constructor(biome_set,region_set,fill) { 
-        this.max_frp = $('#max-frp').val();
-        this.min_frp = $('#min-frp').val(); 
-        this.max_plume_ht = $('#max-ph').val(); 
-        this.min_plume_ht = $('#min-ph').val(); 
+    constructor(biome_set,region_set,fill,index) { 
+        let getter = $('#filter-height')[0].noUiSlider.get();
+        this.min_plume_ht = parseInt(getter[0]); 
+        this.max_plume_ht = parseInt(getter[1]); 
+
+        getter = $('#filter-frp')[0].noUiSlider.get();
+        this.min_frp = parseInt(getter[0]);
+        this.max_frp = parseInt(getter[1]);
+
+        
+        getter = $('#filter-aod')[0].noUiSlider.get(); 
+        this.min_aod = getter[0]; 
+        this.max_aod = getter[1];
+
+        getter = $('#filter-ssa')[0].noUiSlider.get(); 
+        this.min_ssa = getter[0]; 
+        this.max_ssa = getter[1];
+
         this.start_date = $('#start-date').val();
         this.end_date = $('#end-date').val();
 
@@ -22,6 +55,7 @@ class Filter {
         this.mask = false;
         this.mask = [];
         this.num_plumes = 0; 
+        this.index = index;
 
         // create an event dispatcher 
         this.dispatcher = new EventTarget(); 
@@ -34,11 +68,29 @@ class Filter {
     // load this data to the filter set 
     load() { 
         let self = this; 
-        // console.log('load new filter');
-        $('#max-frp').val(this.max_frp);
-        $('#min-frp').val(this.min_frp); 
-        $('#max-ph').val(this.max_plume_ht); 
-        $('#min-ph').val(this.min_plume_ht); 
+        // console.log(self);
+
+        $('#filter-height')[0].noUiSlider.set([
+            this.min_plume_ht, 
+            this.max_plume_ht
+        ]);
+
+        $('#filter-frp')[0].noUiSlider.set([
+            this.min_frp, 
+            this.max_frp
+        ]);
+
+        $('#filter-aod')[0].noUiSlider.set([
+            this.min_aod, 
+            this.max_aod
+        ]);
+
+        $('#filter-ssa')[0].noUiSlider.set([
+            this.min_ssa, 
+            this.max_ssa
+        ]);
+
+
         $('#start-date').val(this.start_date);
         $('#end-date').val(this.end_date);
 
@@ -84,28 +136,37 @@ class Filter {
 
             $('#region-drop > li > input').each(function(i) {
                 // console.log($(this).val());
-                console.log(i);
+                // console.log(i);
                 if (self.region_set.has(i.toString())) $(this).prop('checked',true);
             })
         }
-        
-
-        
     }
 
     // update this data object with the current filter set
     update(biome_set,region_set) { 
-        this.ready = false; 
-        this.max_frp = $('#max-frp').val();
-        this.min_frp = $('#min-frp').val(); 
-        this.max_plume_ht = $('#max-ph').val(); 
-        this.min_plume_ht = $('#min-ph').val(); 
+        let getter = $('#filter-height')[0].noUiSlider.get();
+        this.min_plume_ht = parseInt(getter[0]); 
+        this.max_plume_ht = parseInt(getter[1]); 
+
+        getter = $('#filter-frp')[0].noUiSlider.get();
+        this.min_frp = parseInt(getter[0]);
+        this.max_frp = parseInt(getter[1]);
+
+        
+        getter = $('#filter-aod')[0].noUiSlider.get(); 
+        this.min_aod = getter[0]; 
+        this.max_aod = getter[1];
+
+        getter = $('#filter-ssa')[0].noUiSlider.get(); 
+        this.min_ssa = getter[0]; 
+        this.max_ssa = getter[1];
+
         this.start_date = $('#start-date').val();
         this.end_date = $('#end-date').val();
 
-        // alert(Array.from(biome_set));
         this.biome_set = new Set(biome_set); 
         this.region_set = new Set(region_set); 
+
         this.get(); 
     }
 
@@ -214,57 +275,52 @@ class View {
         this.width = this.$view.css('width'); 
         this.height = this.$view.css('height'); 
 
+        this.toolbar = document.createElement('div'); 
+        this.$toolbar = $(this.toolbar); 
+        this.$toolbar.addClass('toolbar')
+            .css('width',this.width)
+            .css('height','40px');  
+
         // establish and attach the plate 
         this.plate = document.createElement('div'); 
         this.$plate = $(this.plate); 
         this.$plate.addClass('plate')
             .css('width',this.width)
-            .css('height',parseInt(this.height) * 0.90);  
-
-        this.toolbar = document.createElement('div'); 
-        this.$toolbar = $(this.toolbar); 
-        this.$toolbar.addClass('toolbar')
-            .css('width',this.width)
-            .css('height',parseInt(this.height) * 0.1);  
+            .css('height',parseInt(this.height) - parseInt(this.$toolbar.css('height')));  
 
         
-        let $select = $('<select class="view-filter"> \
-            <option value="0" selected="selected">Filter 1</option> \
+        this.$select = $('<select class="view-filter"> \
+            <option value="0">Filter 1</option> \
             <option value="1">Filter 2</option> \
             <option value="2">Filter 3</option> \
             <option value="3">Filter 4</option> \
             </select>').change(function() { 
             let val = $(this).val(); 
+            // $(this).css('background-color',FILTER.COLORS[val]);
             // let view = $(this).parent().parent();
             self.change_filter(val);
-        })
 
-        let $edit = null; 
+            if (session.state == STATE.SINGLE_VIEW) { 
+                session.select_filter(val);
+            }
+        });
 
-        if (view_index == 0) { 
-            $edit = $('<div class="view-edit active" data-value="' + view_index +'"> edit </div>')
-                .click(function(event) {
-                    if ($(event.target).hasClass('active')) { 
-                        return; 
-                    }
-                    $('.view-edit.active').removeClass('active');
-                    $(event.target).addClass('active');
-                    session.select_view($(event.target).attr('data-value'));
-                })
-        } else {
-            $edit = $('<div class="view-edit" data-value="' + view_index +'"> edit </div>')
-                .click(function(event) {
-                    if ($(event.target).hasClass('active')) { 
-                        return; 
-                    }
-                    $('.view-edit.active').removeClass('active');
-                    $(event.target).addClass('active');
-                    session.select_view($(event.target).attr('data-value'));
-                })
-        }
+        this.$select.val(filter_index);
+        this.$select.css('background-color',FILTER.COLORS[filter_index]);
 
-        this.$toolbar.append($edit)
-            .append($select);
+
+        this.$edit = $('<div class="view-edit" data-value="' + view_index +'"> edit </div>')
+            .click(function(event) {
+                if ($(event.target).hasClass('active')) { 
+                    return; 
+                }
+                $('.view-edit.active').removeClass('active');
+                $(event.target).addClass('active');
+                session.select_view($(event.target).attr('data-value'));
+        });
+
+        this.$toolbar.append(this.$edit)
+            .append(this.$select);
         
         // the functional dimensions for an app 
         this.app_width = this.$plate.css('width'); 
@@ -346,19 +402,15 @@ class View {
         if (index == this.filter_index) {
             return; 
         }
-
         this.filter_index = index;
+        this.$select.css('background-color',FILTER.COLORS[this.filter_index]);
+        this.$select.val(this.filter_index);
+        
         this.$view.css('border-color',FILTER.COLORS[index]);
         this.load_data(session.filters[index]);
         this.render();
 
     }
-
-    // unload the data associated with this view
-    // unload_data() { 
-    //     this.data = null; 
-    //     this.data_loaded = false; 
-    // }
 
     // attach this view to a DOM view 
     attach(DOM_element) { 
@@ -430,6 +482,8 @@ class View {
             return; 
         }
 
+        this.$edit.addClass('active');
+
         let controls = $(this.app.plot_controls());
         $('.view-controls').append(controls);
         this.app.register_controls(); 
@@ -461,6 +515,7 @@ class App {
 
     // update the dimensions of the app based on the view
     update(view) { 
+        // console.log('update app');
         if (!this.mounted) {
             throw 'cannout update an unmounted app'; 
         }
@@ -470,6 +525,8 @@ class App {
         if (!this.built) { 
             this.build();
         }
+
+        // console.log(this.scatter);
         // this.clean(); 
         this.render(); 
         this.built = true;
@@ -515,11 +572,53 @@ class App {
         session.unlock(this.view_index);
     }
 
+    // rendering methods for view controls 
+    app_ctrl_color(options) { 
+
+    }
+
     build() {}
     render() {}
     clean() {}   
     plot_controls() {}
 }
+
+const GEO = Object.freeze({
+    STAGE_ID : 'geography-app', 
+    DECK_ID : 'map-deck',
+    SCATTER_ID : 'scatter',
+    MAP_STYLES : [ 
+        'mapbox://styles/mapbox/streets-v10',
+        'mapbox://styles/mapbox/outdoors-v10',
+        'mapbox://styles/mapbox/light-v9',
+        'mapbox://styles/mapbox/dark-v9',
+        'mapbox://styles/mapbox/satellite-v9',
+        'mapbox://styles/mapbox/satellite-streets-v10',
+        'mapbox://styles/mapbox/navigation-preview-day-v2',
+        'mapbox://styles/mapbox/navigation-preview-night-v2',
+        'mapbox://styles/mapbox/navigation-guidance-day-v2',
+        'mapbox://styles/mapbox/navigation-guidance-night-v2',
+    ], 
+    MAP_STYLE_ACCESS : [
+        2,
+        4,
+        8,
+        3, 
+    ],
+    MAP_TOKEN : 'pk.eyJ1IjoiamJvb25lIiwiYSI6ImNqa3o2cjVhdTA2OHkzcG0wOHU4OXplNTMifQ.b3gc6bHvJM8MChCUDZQPKw',
+    INITIAL_VIEWSTATE : { 
+        longitude: 0, 
+        latitude: 0, 
+        zoom: 1.4, 
+        maxZoom: 12, 
+        minZoom: 1, 
+    }, 
+    VIEW_STYLE : { 
+        INITIAL : 0, 
+        EAGLE : 1, 
+        ANGLED : 2,
+    }
+});
 
 // Map visual application 
 class Geo extends App{ 
@@ -529,601 +628,313 @@ class Geo extends App{
         // establish the context for the map 
         this.stage = document.createElement('div');
         this.$stage = $(this.stage); // do not use the Jquery object for this app 
-        this.$stage.attr('id','geography-app');
+        this.$stage.attr('id',GEO.STAGE_ID);
 
-        this.svg = null
-        this.zoomed = null;
+        this.deck_config = null;
+        this.representation = 0;
+        this.style = 0;
+        this.opacity = 0;
+        this.radius = 1;
 
-        this.satellite = false; 
-
-        this.vs = `attribute vec4 aVertexPosition;
-        
-            uniform mat4 uModelViewMatrix;
-            uniform mat4 uProjectionMatrix;
-        
-            void main() {
-            gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-            }`;
-
-        this.fs = `void main() {
-            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-            }`;
+        this.deck = null;
     }
 
-    load_shader(gl,type,source) { 
-        const shader = gl.createShader(type);
+    // generate data for the deck layer based on the current state of the app
+    generate_data() { 
+        let self = this;
+        // the data array we are generating
+        let return_data = [];
 
-        // Send the source to the shader object
-        gl.shaderSource(shader, source);
+        let color_hold = FILTER.COLORS_ARR[this.view_data.index];
+        // a color holder to build and store deck colors 
+        let color = color_hold; // the default color 
 
-        // Compile the shader program
-        gl.compileShader(shader);
+        // alert('litigate');
+        // populate the data [x,y,radius,color]
+        this.view_data.data().forEach(function(plume,i) { 
+            let plume_data = [];
+            plume_data.push(parseFloat(plume.p_src_long)); 
+            plume_data.push(parseFloat(plume.p_src_lat)); 
 
-        // See if it compiled successfully
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
-            gl.deleteShader(shader);
-            return null;
-        }
-
-        return shader;
-    }
-
-    create_shader_program(gl) {
-        const vertex_shader = this.load_shader(gl, gl.VERTEX_SHADER, this.vs);
-        const fragment_shader = this.load_shader(gl, gl.FRAGMENT_SHADER, this.fs);
-      
-        // Create the shader program
-        const shader = gl.createProgram();
-        gl.attachShader(shader, vertex_shader);
-        gl.attachShader(shader, fragment_shader);
-        gl.linkProgram(shader);
-      
-        // If creating the shader program failed, alert
-        if (!gl.getProgramParameter(shader, gl.LINK_STATUS)) {
-          alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
-          return null;
-        }
-      
-        return shader;
-    }
-
-    create_buffers(gl) {
-        // Create a buffer for the square's positions.
-
-        const positionBuffer = gl.createBuffer();
-
-        // Select the positionBuffer as the one to apply buffer
-        // operations to from here out.
-        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-
-        // Now create an array of positions for the square.
-        const positions = [
-            -1.0,  1.0,
-            1.0,  1.0,
-            -1.0, -1.0,
-            1.0, -1.0,
-        ];
-
-        // Now pass the list of positions into WebGL to build the
-        // shape. We do this by creating a Float32Array from the
-        // JavaScript array, then use it to fill the current buffer.
-        gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(positions),gl.STATIC_DRAW);
-
-        return {
-            position: positionBuffer,
-        };
-    }
-
-    drawScene(gl, programInfo, buffers) {
-        gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
-        gl.clearDepth(1.0);                 // Clear everything
-        gl.enable(gl.DEPTH_TEST);           // Enable depth testing
-        gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
-      
-        // Clear the canvas before we start drawing on it.
-      
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-      
-        // Create a perspective matrix, a special matrix that is
-        // used to simulate the distortion of perspective in a camera.
-        // Our field of view is 45 degrees, with a width/height
-        // ratio that matches the display size of the canvas
-        // and we only want to see objects between 0.1 units
-        // and 100 units away from the camera.
-      
-        const fieldOfView = 360 * Math.PI / 180;   // in radians
-        const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-        const zNear = 0.1;
-        const zFar = 100.0;
-        const projectionMatrix = mat4.create();
-      
-        // note: glmatrix.js always has the first argument
-        // as the destination to receive the result.
-        mat4.perspective(projectionMatrix,
-                         fieldOfView,
-                         aspect,
-                         zNear,
-                         zFar);
-      
-        // Set the drawing position to the "identity" point, which is
-        // the center of the scene.
-        const modelViewMatrix = mat4.create();
-      
-        // Now move the drawing position a bit to where we want to
-        // start drawing the square.
-      
-        mat4.translate(modelViewMatrix,     // destination matrix
-                       modelViewMatrix,     // matrix to translate
-                       [-0.0, 0.0, -6.0]);  // amount to translate
-      
-        // Tell WebGL how to pull out the positions from the position
-        // buffer into the vertexPosition attribute.
-        {
-          const numComponents = 2;  // pull out 2 values per iteration
-          const type = gl.FLOAT;    // the data in the buffer is 32bit floats
-          const normalize = false;  // don't normalize
-          const stride = 0;         // how many bytes to get from one set of values to the next
-                                    // 0 = use type and numComponents above
-          const offset = 0;         // how many bytes inside the buffer to start from
-          gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-          gl.vertexAttribPointer(
-              programInfo.attrib.position,
-              numComponents,
-              type,
-              normalize,
-              stride,
-              offset);
-          gl.enableVertexAttribArray(
-              programInfo.attrib.position);
-        }
-      
-        // Tell WebGL to use our program when drawing
-      
-        gl.useProgram(programInfo.shader);
-      
-        // Set the shader uniforms
-      
-        gl.uniformMatrix4fv(
-            programInfo.uniform.projection,
-            false,
-            projectionMatrix);
-        gl.uniformMatrix4fv(
-            programInfo.uniform.model,
-            false,
-            modelViewMatrix);
-      
-        {
-          const offset = 0;
-          const vertexCount = 4;
-          gl.drawArrays(gl.POINTS, offset, vertexCount);
-        }
-      }
-
-    old_render() { 
-        this.$stage.css('width',this.view_width);
-        this.$stage.css('height',this.view_height);
-
-        let self = this, 
-            d3_stage = d3.select(this.stage),
-            width = parseInt(this.view_width), 
-            height = parseInt(this.view_height); 
-
-        this.svg = d3_stage.append('svg')
-            .attr('class','map')
-            .attr('width',width)
-            .attr('height',height);
-
-        // attach a background to the map to change color
-        this.svg.append("rect")
-            .attr("width", "100%")
-            .attr("height", "100%")
-            .attr("fill", "#ccc");
-        
-        let cvs = null, 
-            gl = null; 
-    
-        this.canvas = d3_stage.append(function () { 
-            cvs = document.createElement('canvas');
-            gl = cvs.getContext('webgl'); 
-            return cvs; 
-            })
-            .attr('class','map')
-            .attr('width',width)
-            .attr('height',height);
-
-        let shader = this.create_shader_program(gl);
-
-        let program = {
-            shader: shader,
-            attrib: {
-                position: gl.getAttribLocation(shader, 'aVertexPosition'),
-            },
-            uniform: {
-                projection: gl.getUniformLocation(shader, 'uProjectionMatrix'),
-                model: gl.getUniformLocation(shader, 'uModelViewMatrix'),
-            },
-        };
-
-        let buffers = this.create_buffers(gl);
-
-        this.drawScene(gl,program,buffers);
-
-        // gl.clearColor(0.0,0.0,0.0,0.5);
-        // gl.clear(ctx.COLOR_BUFFER_BIT);
-
-        // append an element for the land
-        this.land = this.svg.append('g'); 
-
-        // create zoom behavior
-        const zoom = d3.zoom()
-            .on('zoom', () => {
-                self.land.style('stroke-width', `${1.5 / d3.event.transform.k}px`);
-                self.land.attr('transform', d3.event.transform);
-                ctx.save(); 
-                ctx.clearRect(0,0,width,height); 
-                ctx.translate(d3.event.transform.x,d3.event.transform.y); 
-                ctx.scale(d3.event.transform.k,d3.event.transform.k); 
-                console.log(d3.event.transform.k);
-                draw_plumes(1/d3.event.transform.k); 
-                ctx.restore(); 
-                self.zoomed = d3.event.transform;
-                
-            })
-            .scaleExtent([1,Infinity])
-            .translateExtent([[0,0],[width,height]]);
-
-        // attacch zoom behavior
-        // this.svg.call(zoom)
-        this.canvas.call(zoom); 
-
-        // create projection 
-        this.projection = d3.geoEquirectangular()
-            .fitSize([width,height],geojson);
-
-        this.geoPath = d3.geoPath().projection(this.projection); 
-
-        this.land.selectAll('path')
-            .data(geojson.features)
-            .enter()
-            .append('path')
-            .attr('fill', '#fff')
-            .attr('d', this.geoPath);
-
-        draw_plumes(1);
-
-        if (this.zoomed) { 
-            self.land.style('stroke-width', `${1.5 / self.zoomed.k}px`);
-            self.land.attr('transform', self.zoomed);
-            ctx.save(); 
-            ctx.clearRect(0,0,width,height); 
-            ctx.translate(self.zoomed.x,self.zoomed.y); 
-            ctx.scale(self.zoomed.k,self.zoomed.k); 
-            draw_plumes(1/Math.round(self.zoomed.k)); 
-            ctx.restore(); 
-            this.canvas.call(zoom.transform,self.zoomed); 
-        }
-
-        function draw_plumes(ratio) { 
-            if (self.view_data) { 
-                self.view_data.data().forEach(function(plume,i) { 
-                    
-                    if (self.view_data.masked) { 
-                        if (self.view_data.is_masked(i) == 1) { 
-
-                            ctx.globalAlpha = 1; 
-                        } else { 
-                            ctx.globalAlpha = 0.01;
-                        }
-                    }
-                        
-                    if (self.color == 1) { 
-                        ctx.fillStyle = biome_colors[plume.p_biome_id];
-                    } else if (self.color == 2) {
-                        ctx.fillStyle = region_colors[plume.p_region_id];
-                    }else { 
-                        ctx.fillStyle = 'rgb(230, 134, 134)';
-                    }
-                    let [x,y] = self.projection([plume.p_src_long,plume.p_src_lat]); 
-                    // ctx.moveTo(x,y);
-                    ctx.beginPath(); 
-                    ctx.arc(x,y, 1 * ratio + 0.1, 0, 2 * Math.PI);
-                    ctx.closePath(); 
-                    ctx.fill();
-                });
-                // ctx.stroke();
-                ctx.fill();
+            if (self.radius == 0) { 
+                plume_data.push(0.5); 
+            } else if (self.radius == 1) { 
+                plume_data.push(plume.p_total_frp);
+            } else if (self.radius == 2) { 
+                plume_data.push(plume.p_max_ht/3);
             }
-        }
-        
+
+            
+            if (self.color == 1) { 
+                color = biome_colors_arr[plume.p_biome_id].slice();
+            } else if (self.color == 2) { 
+                color = region_colors_arr[plume.p_region_id].slice();
+            }
+
+            if (self.opacity == 0) { 
+                color.push(200);
+            } else if (self.opacity == 1) { 
+                color.push(plume.p_total_frp);
+            } else if (self.opacity == 2) { 
+                color.push(plume.p_max_ht);
+            }
+
+            
+            if (self.view_data.masked) { 
+                // alert('litigator');
+                
+                if (!self.view_data.is_masked(i)) {
+                    // color = [0,0,0,100];
+                    return;
+                }
+            } 
+
+            plume_data.push(color); 
+            color = color_hold;
+            return_data.push(plume_data);
+
+        }); 
+        return return_data;
     }
 
+    // generate a new deck layer
+    generate_layer(data) { 
+        if (this.representation == 0) { 
+            return new deck.ScatterplotLayer({
+                id: 'scatter', 
+                radiusMaxPixels: 8,
+                radiusMinPixels: 2,
+                pickable: true,
+                autoHighlight: true, 
+                onHover: function(info){ 
+                    // deck.setTooltip('hey');
+                    // console.log(info);
+                },
+                getRadius: function(d) {return d[2] * 100},
+                getPosition: function(d) {return [d[0],d[1],0];}, 
+                getColor: function(d) {return d[3]},
+                data: data,
+            });
+        } else if (this.representation == 1) { 
+            return new deck.ScreenGridLayer({ 
+                id: 'grid', 
+                data: data, 
+                cellSizePixels: 20,
+                getPosition: function(d) {return [d[0],d[1],0];}, 
+                getWeight: function(d) {return d[2] * 10},
+            }); 
+        } else if (this.representation == 2) { 
+            let layer = new deck.HexagonLayer({ 
+                id: 'hexagon', 
+                data: data, 
+                radius: 70000, 
+                pickable: true,
+                autoHighlight: true, 
+
+                // coverage: 1, 
+                extruded: true,
+                elevationScale: 5000, 
+                elevationDomain: [10,300],
+                // getElevationValue: function(p) { return 10; },
+                getPosition: function(d) {return [d[0],d[1]];}, 
+                // getElevationValue: this.elev,
+            }); 
+
+            let divider = 1; 
+
+            if (this.radius == 1) { 
+                divider = 30;
+            } else if (this.radius == 2) { 
+                divider = 50;
+            }
+
+            let self = this;
+            layer.__proto__._onGetSublayerElevation = function(t) { 
+                let num = 0;
+                
+                t.points.forEach(function(pt) { 
+                    if (!self.radius) { 
+                        num++;
+                    } else {
+                        num+= pt[2]; ///divider;
+                    }
+                   
+                    
+                });
+                // return (num/(t.points.length)) * 5;
+                return num * (1/divider); 
+            }
+
+            // layer.__proto__._onGetSublayerColor = function(t) { 
+            //     let num = 0;
+            //     t.points.forEach(function(pt) { 
+            //        num+= pt[2]/divider;
+                    
+            //     });
+            //     // return num/(t.points.length) * 5;
+            //     return num; 
+            // }
+
+            // layer.props._proto_.getElevationValue = t => 500;
+            return layer;
+        }
+    }
+
+    generate_viewstate() { 
+        // alert(this.representation);
+        // if this is the initial view style there is only one that it could be 
+        if (this.deck == null) { 
+            return GEO.INITIAL_VIEWSTATE;
+        } 
+        
+        // if it is not the inital view style we need to determine what to base 
+        // the view off of i.e. we must already have a built deck with a viewstate
+        if (this.deck == null) throw 'VIEW GENERATION ERROR: Deck not built';
+
+        let defaulted = this.deck.viewState['default-view'] != null; // do we have a defaulted (changed) viewstate
+
+        let src = null; 
+        if (defaulted) { 
+            src = this.deck.viewState['default-view'];
+        } else { 
+            src = this.deck.viewState;
+        }
+
+        // get the current viewstate 
+        let current_vs = {
+            longitude: src.longitude, 
+            latitude: src.latitude, 
+            zoom: src.zoom, 
+            maxZoom: src.maxZoom, 
+            minZoom: src.minZoom, 
+        }
+
+        
+        if (this.representation != 2) { 
+            current_vs.pitch = 0;
+            current_vs.bearing = 0;
+        } else { 
+            current_vs.pitch = 40.5;
+            current_vs.bearing = -27;
+        }
+
+        return current_vs;
+    }
+
+    clean_deck() { 
+        if (this.deck) { 
+            $(this.deck._map.map._container).remove();
+            $('#' + this.deck.props.id).remove();
+            this.deck.finalize();
+        }
+    }
+
+    elev(d) { 
+        return 500;
+    }
+
+    // build the deck object 
     build() { 
+        this.built = false;
+        // store dimensions 
         this.$stage.css('width',this.view_width);
         this.$stage.css('height',this.view_height);
+        let self = this;
 
-        let self = this, 
-            d3_stage = d3.select(this.stage),
-            width = parseInt(this.view_width), 
-            height = parseInt(this.view_height); 
+        let use_viewstate = this.generate_viewstate();
+        this.deck_view = new MapView({id: 'primary-map'});
 
-        this.svg = d3_stage.append('svg')
-            .attr('class','map')
-            .attr('width',width)
-            .attr('height',height);
+        // create the deck configuration 
+        this.deck_config = { 
+            // unique identifier for deck 
+            id : GEO.DECK_ID, 
 
-        // attach a background to the map to change color
-        // this.svg.append("rect")
-        //     .attr("width", "100%")
-        //     .attr("height", "100%")
-        //     .attr("fill", "#ccc");
-        
-        let cvs = null, 
-            ctx = null; 
-    
-        // this.canvas = d3_stage.append(function () { 
-        //     return document.createElement('canvas'); 
-        //     })
-        //     .attr('class','map')
-        //     .attr('id','soap');
+            // attach deck to the stage
+            container : GEO.STAGE_ID,
 
-        // let options = { 
-        //     view: self.canvas.node(), 
-        //     width: width,
-        //     height: height,
-        //     antialias: true,
-        //     transparent: true,
-        // }
+            // views : deck_view,
 
-        // this.points = new PIXI.Application(options);
+            // establish view state 
+            viewState : use_viewstate,
 
-        // this.graphics = new PIXI.Graphics(); 
-        // this.graphics.alpha = 1;
+            // default to satellite I suppose 
+            mapboxApiAccessToken: GEO.MAP_TOKEN,
+            mapStyle: GEO.MAP_STYLES[GEO.MAP_STYLE_ACCESS[this.style]],
+        }
 
-        // this.points.stage = this.graphics;
-        // this.scale_level = 1;
+        // aquire the data 
+        let deck_data = this.generate_data();
 
-        // let self = this; 
-        $('#scale-btn').click(function() { 
-            alert(self.scale);
-        }); 
+        // create the scatter layer to overlay on the deck 
+        this.deck_layer = this.generate_layer(deck_data);
 
-        // create zoom behavior
-        // this.zoom = d3.zoom()
-        //     .on('zoom', () => {
-        //         self.land.style('stroke-width', `${1.5 / d3.event.transform.k}px`);
-        //         self.land.attr('transform', d3.event.transform);
-        //         self.graphics.position.x = d3.event.transform.x; 
-        //         self.graphics.position.y = d3.event.transform.y; 
-        //         self.graphics.scale.x = d3.event.transform.k;
-        //         self.graphics.scale.y = d3.event.transform.k;
-        //         if (Math.floor(d3.event.transform.k) != this.scale_level) { 
-        //             self.scale_level = Math.floor(d3.event.transform.k); 
-        //             // console.log(self.graphics);
-        //             self.graphics.graphicsData = self.graphics.graphicsData.map((t) => {
-        //                 t.shape.radius = 2/self.scale_level;
-        //                 return t; 
-        //             })
+        this.clean_deck(); 
 
-        //             self.graphics.dirty++; 
-        //             self.graphics.clearDirty++;
-        //             self.points.render();
+        this.deck_config.layers = [this.deck_layer];
+        this.deck = new deck.DeckGL(this.deck_config);
 
-        //         }
-                
-                
+        // console.log(this.deck);
 
-        //         // console.log(self.graphics.grap)
-        //         // self.graphics.renderWebGL();
-        //         // self.scale = d3.event.transform.k;
-                
-        //         // self.draw_plumes(d3.event.transform.k);
-      
-        //         // self.zoomed = d3.event.transform;
-                
-        //     })
-        //     .scaleExtent([1,Infinity])
-        //     .translateExtent([[0,0],[width,height]]);
 
-        // this.canvas.call(this.zoom);
+        // this.built = true;
+
     }
+
 
     render() { 
-        // // this.graphics.scale = 1;
-
-        // for (let i = 0; i < 70000; i++) { 
-        //     this.graphics.beginFill(0xe68686);
-        //     this.graphics.drawCircle(Math.random() * 2000,Math.random() * 200,2); 
-        //     this.graphics.endFill();
-        // }
-        
-        let width = parseFloat(this.view_width), 
-            height = parseFloat(this.view_height); 
-
-        // this.points.render();
-
-        // append an element for the land
-        this.land = this.svg.append('g'); 
-
-        let self = this; 
-
-        let data = []; 
-        let color = []; 
-        this.view_data.data().forEach(function(plume){ 
-            color = biome_colors_arr[plume.p_biome_id].slice();
-            color.push(255);
-            data.push([parseFloat(plume.p_src_long),parseFloat(plume.p_src_lat),color])
-        });
-
-        console.log(data);
-
-        let scatter = new deck.ScatterplotLayer({
-            id: 'points', 
-            radiusMaxPixels: 5,
-            radiusMinPixels: 5,
-            // radiusScale: 1
-            getRadius: function(d) {return 0.5},
-            getPosition: function(d) {return [d[0],d[1],0];}, 
-            getColor: function(d) {return d[2]},
-            data: data
-
-        })
-
-        let deck_options = { 
-            id: 'geo-deck',
-            container: 'geography-app',
-            mapboxApiAccessToken: 'pk.eyJ1IjoiamJvb25lIiwiYSI6ImNqa3o2cjVhdTA2OHkzcG0wOHU4OXplNTMifQ.b3gc6bHvJM8MChCUDZQPKw',
-            mapStyle: 'mapbox://styles/mapbox/satellite-v9',
-            // mapStyle: 'mapbox://styles/mapbox/light-v9',
-            viewState : { 
-            longitude: 0,
-            latitude: 0,
-            zoom: 0.5,
-            maxZoom: 12, 
-            minZoom: 0.5,
-            },
-          
-
-            // views: new View({}),
-            layers: [
-                // new deck.GeoJsonLayer({
-                //     id: 'yo',
-                //     data: geojson,
-                //     getFillColor: [160, 160, 180, 200],
-                // }),
-                scatter
-              ]
-
+        // can't render if it's not built 
+        if (!this.built) { 
+            this.built = true;
+            return;
         }
 
-        // new deck.DeckGL({
-            
-        //     longitude: -74,
-        //     latitude: 40.76,
-        //     zoom: 11,
-        //     maxZoom: 16,
-        //     layers: [
-        //       new deck.ScatterplotLayer({
-        //         id: 'scatter-plot',
-        //         data: 'https://raw.githubusercontent.com/uber-common/deck.gl-data/master/examples/scatterplot/manhattan.json',
-        //         radiusScale: 10,
-        //         radiusMinPixels: 0.5,
-        //         getPosition: d => [d[0], d[1], 0],
-        //         // getColor: d => (d[2] === 1 ? MALE_COLOR : FEMALE_COLOR)
-        //       })
-        //     ]
-        //   });
-      
+        // alert('how');
+        let deck_data = this.generate_data();
 
-        let dk = new deck.DeckGL(deck_options);
-        console.log(dk); 
+        this.deck_layer = this.generate_layer(deck_data); 
 
-        // let zoom_barrier = d3.zoom()
-        //     .scaleExtent([1,Infinity])
-        //     .translateExtent([[0,0],[width,height]]);
 
-        // let k = d3.select('#geo-deck')
-        //     .call(zoom_barrier); 
+        // let use_viewstate = 
+        let use_viewstate = this.generate_viewstate();
 
-        // // attacch zoom behavior
-        // // this.svg.call(zoom)
-        // this.canvas.call(zoom); 
-
-        // create projection 
-        // this.projection = d3.geoEquirectangular()
-        //     .fitSize([width,height],geojson);
-
-        // this.geoPath = d3.geoPath().projection(this.projection); 
-
-        // this.land.selectAll('path')
-        //     .data(geojson.features)
-        //     .enter()
-        //     .append('path')
-        //     .attr('fill', '#fff')
-        //     .attr('d', this.geoPath);
-
-        // return;
-
-        // this.draw_plumes(1);
-
-        // if (this.zoomed) { 
-        //     self.land.style('stroke-width', `${1.5 / self.zoomed.k}px`);
-        //     self.land.attr('transform', self.zoomed);
-        //     ctx.save(); 
-        //     ctx.clearRect(0,0,width,height); 
-        //     ctx.translate(self.zoomed.x,self.zoomed.y); 
-        //     ctx.scale(self.zoomed.k,self.zoomed.k); 
-        //     draw_plumes(1/Math.round(self.zoomed.k)); 
-        //     ctx.restore(); 
-        //     this.canvas.call(zoom.transform,self.zoomed); 
-        // }
-
-        // function draw_plumes(ratio) { 
-        //     if (self.view_data) { 
-        //         self.view_data.data().forEach(function(plume,i) { 
-                    
-        //             if (self.view_data.masked) { 
-        //                 if (self.view_data.is_masked(i) == 1) { 
-
-        //                     ctx.globalAlpha = 1; 
-        //                 } else { 
-        //                     ctx.globalAlpha = 0.01;
-        //                 }
-        //             }
-                        
-        //             if (self.color == 1) { 
-        //                 ctx.fillStyle = biome_colors[plume.p_biome_id];
-        //             } else if (self.color == 2) {
-        //                 ctx.fillStyle = region_colors[plume.p_region_id];
-        //             }else { 
-        //                 ctx.fillStyle = 'rgb(230, 134, 134)';
-        //             }
-        //             let [x,y] = self.projection([plume.p_src_long,plume.p_src_lat]); 
-        //             // ctx.moveTo(x,y);
-        //             ctx.beginPath(); 
-        //             ctx.arc(x,y, 1 * ratio + 0.1, 0, 2 * Math.PI);
-        //             ctx.closePath(); 
-        //             ctx.fill();
-        //         });
-        //         // ctx.stroke();
-        //         ctx.fill();
-        //     }
-        // }
-        
+        this.deck.setProps({
+            layers : [this.deck_layer],
+            viewState : use_viewstate,
+        })  
         
     }
 
-    draw_plumes(scale) { 
-        let self = this;
-        this.graphics.clear();
-        if (this.view_data) { 
-            this.view_data.data().forEach(function(plume,i) { 
-                
-                // if (self.view_data.masked) { 
-                //     if (self.view_data.is_masked(i) == 1) { 
-
-                //         ctx.globalAlpha = 1; 
-                //     } else { 
-                //         ctx.globalAlpha = 0.01;
-                //     }
-                // }
-                    
-                // if (self.color == 1) { 
-                //     ctx.fillStyle = biome_colors[plume.p_biome_id];
-                // } else if (self.color == 2) {
-                //     ctx.fillStyle = region_colors[plume.p_region_id];
-                // }else { 
-                //     ctx.fillStyle = 'rgb(230, 134, 134)';
-                // }
-                let [x,y] = self.projection([plume.p_src_long,plume.p_src_lat]);
-
-                self.graphics.beginFill(0xe68686);
-                self.graphics.drawCircle(x,y,1); 
-                self.graphics.endFill();
-            });
-            // this.graphics.clear();
-            this.points.render();
+    hex_aggregator({data, radius, getPosition}, viewport) { 
+        // get hexagon radius in mercator world unit
+        const radiusInPixel = getRadiusInPixel(radius, viewport);
+        
+        // add world space coordinates to points
+        const screenPoints = [];
+        for (const pt of data) {
+            screenPoints.push(
+            Object.assign(
+                {
+                screenCoord: viewport.projectFlat(getPosition(pt))
+                },
+                pt
+            )
+            );
         }
+        
+        const newHexbin = hexbin()
+            .radius(radiusInPixel)
+            .x(d => d.screenCoord[0])
+            .y(d => d.screenCoord[1]);
+        
+        const hexagonBins = newHexbin(screenPoints);
+        
+        return {
+            hexagons: hexagonBins.map((hex, index) => ({
+            centroid: viewport.unprojectFlat([hex.x, hex.y]),
+            points: hex,
+            index
+            }))
+        };
     }
 
     clean() { 
@@ -1133,31 +944,85 @@ class Geo extends App{
         }
     }
 
+    plot_ctrl_style() { 
+        return `<dl class="dropdown view-dropdown"> 
+            <dt data-target="0">
+                <a href="#" data-target="0" id="region-text">
+                    <span class="view-drop-text 0"> plot-type </span>    
+                </a>
+            </dt>
+            <dd>
+                <ul class='view-drop' id='geo-style-drop' data-target="2">
+                    <li>
+                        <input type="checkbox" data-code="0" value="Africa" />Africa</li>
+                    <li>
+                        <input type="checkbox" data-code="1" value="Australia" />Australia</li>
+                    <li>
+                        <input type="checkbox" data-code="2" value="Southwest Eurasia" />Southwest Eurasia</li>
+                    <li>
+                        <input type="checkbox" data-code="3" value="North America" />North America</li>
+                    <li>
+                        <input type="checkbox" data-code="4" value="Boreal Eurasia" />Boreal Eurasia</li>
+                    <li>
+                        <input type="checkbox" data-code="5" value="South America" />South America</li>
+                    <li>
+                        <input type="checkbox" data-code="6" value="South Asia" />South Asia</li>
+                </ul>
+            </dd>
+        </dl>`;
+    }
+
     plot_controls() { 
-        let str = '<div class="plot-type">   \
-            Plot Type: \
-            <select class="plot-selection">  \
-                <option value="0" selected="selected">Geography</option> \
-                <option value="1">Scatter</option> \
-                <option value="2">Pie</option> \
-                <option value="3">Parallel Coordinates</option> \
-            </select> \
-            <div class="plot-options"> \
-                color \
-                <select class="plot-color"> \
-                    <option value="0" selected="selected">None</option> \
-                    <option value="1">Biome</option> \
-                    <option value="2">Region</option> \
-                </select> \
-            </div> \
-        </div>'
+        // let str = this.plot_ctrl_style();
+        let str = `<div class="plot-type">   
+            Plot Type: 
+            <select class="plot-select plot-selection">  
+                <option value="0" selected="selected">Geography</option> 
+                <option value="1">Scatter</option> 
+                <option value="2">Pie</option> 
+            </select> 
+            <div class="plot-options"> 
+                <span class="plot-selection-label"> style </span> 
+                <select class="plot-style"> 
+                    <option value="0" selected="selected">Vanilla</option> 
+                    <option value="1">Satellite</option> 
+                    <option value="2">Map</option> 
+                    <option value="3">Nightime</option> 
+                </select> <br> 
+                <span class="plot-selection-label"> data representation </span>
+                <select class="plot-representation"> 
+                    <option value="0" selected="selected">Scatter</option> 
+                    <option value="1">Grid</option> 
+                    <option value="2">Pillars</option> 
+                </select> <br> 
+                <span class="plot-selection-label"> color </span> 
+                <select class="plot-color"> 
+                    <option value="0" selected="selected">None</option> 
+                    <option value="1">Biome</option> 
+                    <option value="2">Region</option> 
+                </select> <br>
+                <span class="plot-selection-label"> radius </span> 
+                <select class="plot-radius"> 
+                    <option value="0" selected="selected">Uniform</option> 
+                    <option value="1">FRP</option> 
+                    <option value="2">Plume Height</option> 
+                </select> <br>
+                <span class="plot-selection-label"> opacity </span> 
+                <select class="plot-opacity"> 
+                    <option value="0" selected="selected">Uniform</option> 
+                    <option value="1">FRP</option> 
+                    <option value="2">Plume Height</option> 
+                </select> <br>
+            </div> 
+        </div>`
 
         return str; 
     }
 
     register_controls() { 
+
         let self = this;
-        $('.plot-selection').change(function() { 
+        $('.plot-select').change(function() { 
             let val = $(this).val(); 
             let app = null; 
 
@@ -1178,7 +1043,28 @@ class Geo extends App{
         $('.plot-color').change(function() { 
             self.color = $(this).val(); 
             self.render();
-        });
+        }).val(this.color);
+
+        $('.plot-representation').change(function() { 
+            self.representation = $(this).val(); 
+            self.render();
+            
+        }).val(this.representation);
+
+        $('.plot-style').change(function() { 
+            self.style = $(this).val(); 
+            self.build();
+        }).val(this.style);
+
+        $('.plot-radius').change(function() { 
+            self.radius = $(this).val(); 
+            self.render();
+        }).val(this.radius);
+
+        $('.plot-opacity').change(function() { 
+            self.opacity = $(this).val(); 
+            self.render();
+        }).val(this.opacity);
     }
 
 }
@@ -1403,7 +1289,6 @@ class Pie extends Plot {
             <option value="0">Geography</option> \
             <option value="1">Scatter</option> \
             <option value="2" selected="selected">Pie</option> \
-            <option value="3">Parallel Coordinates</option> \
         </select> \
         <div class="plot-options"> \
             variable \
@@ -1435,7 +1320,7 @@ class Pie extends Plot {
             }
 
             session.load_app(app);
-            session.change_view(session.selected_view);
+            session.select_view(session.selected_view);
         });
 
         $('.plot-variable').change(function() { 
@@ -1448,6 +1333,7 @@ class Pie extends Plot {
 class ScatterPlot extends Plot { 
     constructor(x_conf,y_conf) { 
         super(x_conf,y_conf); 
+        this.opacity = 1;
     }
 
     setData() { 
@@ -1471,6 +1357,15 @@ class ScatterPlot extends Plot {
             if (!opt || !ab) { 
                 return; 
             }
+
+            if (self.view_data.masked) { 
+                if (self.view_data.is_masked(i)) { 
+                    // opacity.push(1); 
+                } else {
+                    return;
+                }
+            }
+            
             
             if (self.x_conf == 0) { 
                 x.push(plume.p_total_frp); 
@@ -1506,11 +1401,11 @@ class ScatterPlot extends Plot {
                 colors.push(biome_colors[plume.p_biome_id])
             }
                
-            if (self.view_data.is_masked(i)) { 
-                opacity.push(1); 
-            } else {
-                opacity.push(0.1);
-            }
+            // if (self.view_data.is_masked(i)) { 
+            //     opacity.push(1); 
+            // } else {
+            //     opacity.push(0.1);
+            // }
             data.push(i);
         }); 
 
@@ -1519,16 +1414,16 @@ class ScatterPlot extends Plot {
         if (this.color != 0) { 
             use_color = colors; 
         } else { 
-            use_color = 'rgb(246,149,149)';
+            use_color = FILTER.COLORS[this.view_data.index];
         }
 
-        let use_opacity = null; 
+        let use_opacity = this.opacity; 
 
-        if (this.view_data.masked) { 
-            use_opacity = opacity; 
-        } else { 
-            use_opacity = 1; 
-        }
+        // if (this.view_data.masked) { 
+        //     use_opacity = opacity; 
+        // } else { 
+        //     use_opacity = 1; 
+        // }
         trace1 = {
             type: 'scattergl',
             x: x,
@@ -1548,7 +1443,7 @@ class ScatterPlot extends Plot {
             // hovermode: 'closest',
             // height: 500,
             margin: {
-                l: 10,
+                l: 70,
                 r: 10,
                 b: 80,
                 t: 10,
@@ -1572,37 +1467,40 @@ class ScatterPlot extends Plot {
     }
 
     plot_controls() { 
-        let str = '<div class="plot-type">   \
-            Plot Type: \
-            <select class="plot-selection">  \
-                <option value="0">Geography</option> \
-                <option value="1" selected="selected">Scatter</option> \
-                <option value="2">Pie</option> \
-                <option value="3">Parallel Coordinates</option> \
-            </select> \
-            <div class="plot-options"> \
-                x \
-                <select class="plot-x"> \
-                    <option value="0" selected="selected">FRP</option> \
-                    <option value="1">Height</option> \
-                    <option value="2">AOD</option> \
-                    <option value="3">Albedo</option> \
-                </select> <br>\
-                y \
-                <select class="plot-y"> \
-                    <option value="0">FRP</option> \
-                    <option value="1" selected="selected">Height</option> \
-                    <option value="2">AOD</option> \
-                    <option value="3">Albedo</option> \
-                </select> <br> \
-                color \
-                <select class="plot-color"> \
-                    <option value="0" selected="selected">None</option> \
-                    <option value="1">Biome</option> \
-                    <option value="2">Region</option> \
-                </select> \
-            </div> \
-        </div>'
+        let str = `<div class="plot-type">   
+            Plot Type: 
+            <select class="plot-selection">  
+                <option value="0">Geography</option> 
+                <option value="1" selected="selected">Scatter</option> 
+                <option value="2">Pie</option> 
+            </select> 
+            <div class="plot-options"> 
+                x 
+                <select class="plot-x"> 
+                    <option value="0" selected="selected">FRP</option> 
+                    <option value="1">Height</option> 
+                    <option value="2">AOD</option> 
+                    <option value="3">Albedo</option> 
+                </select> <br>
+                y 
+                <select class="plot-y"> 
+                    <option value="0">FRP</option> 
+                    <option value="1" selected="selected">Height</option> 
+                    <option value="2">AOD</option> 
+                    <option value="3">Albedo</option> 
+                </select> <br> 
+                color 
+                <select class="plot-color"> 
+                    <option value="0" selected="selected">None</option> 
+                    <option value="1">Biome</option> 
+                    <option value="2">Region</option> 
+                </select> <br>
+                opacity
+                <div class="slidecontainer" id="me">
+                    <input type="range" min="1" max="100" value="100" class="slider" id="myRange">
+                </div>
+            </div> 
+        </div>`
 
         return str; 
     }
@@ -1625,7 +1523,7 @@ class ScatterPlot extends Plot {
             }
 
             session.load_app(app);
-            session.change_view(session.selected_view);
+            session.select_view(session.selected_view);
         });
 
         $('.plot-color').change(function() { 
@@ -1640,6 +1538,12 @@ class ScatterPlot extends Plot {
 
         $('.plot-y').change(function() { 
             self.y_conf = $(this).val(); 
+            self.render();
+        });
+
+        $('#me').change(function() { 
+            self.opacity = $(this).find('input').val()/100;
+            
             self.render();
         });
     }

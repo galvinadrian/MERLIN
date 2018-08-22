@@ -1,12 +1,12 @@
 // The main javascript file that generates and runs a MERLIN session 
 // global session variables 
 
-
 // state program for managing state of app 
 $(document).ready(() => {
 
     session = new Instance(); 
     session.init();
+
 
     $('#single-btn').click(function() { 
         if (session.state == STATE.SINGLE_VIEW) { 
@@ -73,10 +73,15 @@ $(document).ready(() => {
     $('.filter-btn').click(function() { 
         let index = $(this).attr('data-value');
         session.select_filter(index);
+
+        if (session.state = STATE.SINGLE_VIEW) { 
+            session.visible_views[session.selected_view].change_filter(index);
+        }
     })
 
     $('#wash-btn').click(function() { 
         session.filters[session.selected_filter].reset_mask();
+        // session.visible_views[session.selected_view].render();
     })
 
 
@@ -87,13 +92,17 @@ $(document).ready(() => {
 	license: https://www.opensource.org/licenses/mit-license.php
     */
 
-    let drops = ['#biome-drop','#region-drop'];
+    let drops = ['#biome-drop','#region-drop','#geo-style-drop'];
     let sets = [session.biomes,session.regions];
+    let dropped = null
 
-    $(".dropdown dt a").on('click', function() {
+    $(".dropdown dt").on('click', function() {
         let target = $(this).attr('data-target'); 
-        // alert(target); 
+        if (dropped && dropped != target) { 
+            $(drops[dropped]).hide();
+        }
         $(drops[target]).slideToggle('fast');
+        dropped = target;
     });
     
     $(".dropdown dd ul li a").on('click', function() {
@@ -132,7 +141,7 @@ $(document).ready(() => {
         }
     });
 
-
+    // $('.noUi-connect').css('background','white');
 })
 
 // on the resize of the window 
